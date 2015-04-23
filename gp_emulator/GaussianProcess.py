@@ -3,6 +3,7 @@ import warnings
 import numpy as np
 import scipy.spatial.distance as dist
 import random
+import _gpu_predict
 
 def k_fold_cross_validation(X, K, randomise = False):
     """
@@ -273,6 +274,27 @@ class GaussianProcess:
                 hess[:, d,d2] = np.dot(cc.T, self.invQt)
         return hess
 
+    def gpu_predict ( self, testing, do_unc = True ):# self, testing, do_unc=True):
+        '''GPU predict function
+        '''
+        ( nn, D ) = testing.shape
+        assert D == self.D
+        print self.inputs.shape
+        a =_gpu_predict.predict(self.D,
+            self.theta,
+            self.inputs,
+            self.invQt,
+            self.invQ,
+            testing)
+        print a
+        #print b
+        #print self.theta
+        
+
+
+        
+
+
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
     np.set_printoptions(precision=2, suppress=True)
@@ -283,7 +305,7 @@ if __name__ == "__main__":
     #target2 = data[ :,1]
     #target3 = data[ :,2]
     #input_obs = data[ :, 3: ]
-    wheat = np.loadtxt("argentine_wheat.dat")[:, 1:]
+    wheat = np.loadtxt("data/argentine_wheat.dat")[:, 1:]
     yields = wheat[:,0]
     mu = yields.mean()
     sigma = yields.std()
@@ -299,12 +321,13 @@ if __name__ == "__main__":
         inputs_v = validate [ :, 1:]
         gp = GaussianProcess ( inputs_t, yields_t )
         theta_min= gp.learn_hyperparameters (n_tries=2)
-        pred_mu, pred_var, par_dev = gp.predict ( inputs_v )
-        print "TEST"
-        print inputs_v
-        print pred_mu, pred_var, par_dev
-        r = ( yields_v - pred_mu )**2#/pred_var
-        rmse.append ( [ np.sqrt(r.mean()), theta_min[1] ])
+        #pred_mu, pred_var, par_dev = gp.predict ( inputs_v )
+        gp.gpu_predict ( inputs_v )
+        #print "TEST"
+        #print inputs_v
+        #print pred_mu, pred_var, par_dev
+        #r = ( yields_v - pred_mu )**2#/pred_var
+        #rmse.append ( [ np.sqrt(r.mean()), theta_min[1] ])
         
         
     #gp.theta[2] = 0.
