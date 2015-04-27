@@ -226,25 +226,24 @@ class GaussianProcess:
 
         ( nn, D ) = testing.shape
         assert D == self.D
-        
+
         expX = np.exp ( self.theta )
         
         a = dist.cdist ( np.sqrt(expX[:(self.D)])*self.inputs, \
             np.sqrt(expX[:(self.D)])*testing, 'sqeuclidean')
-        
         a = expX[self.D]*np.exp(-0.5*a)
         b = expX[self.D]
         
         mu = np.dot( a.T, self.invQt)
+
         if do_unc:
-	    var = b - np.sum (  a * np.dot(self.invQ,a), axis=0)
+	       var = b - np.sum (  a * np.dot(self.invQ,a), axis=0)
         # Derivative and partial derivatives of the function
         deriv = np.zeros ( ( nn, self.D ) )
 
         for d in xrange ( self.D ):
             aa = self.inputs[:,d].flatten()[None,:] - testing[:,d].flatten()[:,None]
             c = a*aa.T
-
             deriv[:, d] = expX[d]*np.dot(c.T, self.invQt)
         if do_unc:
             return mu, var, deriv
@@ -321,8 +320,8 @@ if __name__ == "__main__":
         inputs_v = validate [ :, 1:]
         gp = GaussianProcess ( inputs_t, yields_t )
         theta_min= gp.learn_hyperparameters (n_tries=2)
-        #pred_mu, pred_var, par_dev = gp.predict ( inputs_v )
-        gp.gpu_predict ( inputs_v )
+        pred_mu, pred_var, par_dev = gp.predict ( inputs_v )
+        #gp.gpu_predict ( inputs_v )
         #print "TEST"
         #print inputs_v
         #print pred_mu, pred_var, par_dev

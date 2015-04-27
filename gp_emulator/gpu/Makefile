@@ -1,20 +1,27 @@
-
-CC = nvcc
-BUILDPATH= ../../build/lib
-OBJ = _gpu_predict
+SRCS= _gpu_predict.c cdist.cu
+OBJS = _gpu_predict.o cdist.o
+SHARE = _gpu_predict.so #$(SRCS:.c=.so) $(CUDASRCS:.cu=.so)
+GPUCC = nvcc
+CC = gcc
+BUILDPATH= ../../build/lib/
 INC = -I/usr/include/python2.7 -I/usr/local/lib/python2.7/site-packages/numpy/core/include/numpy
 LIB = -lcuda -lcudart -lcublas
 NVLIB = -L/Developer/NVIDIA/CUDA-7.0/lib/
 
 
-$(BUILDPATH)/$(OBJ).so:  $(BUILDPATH)/$(OBJ).o
-	gcc -bundle -flat_namespace -undefined suppress -o $@ $<  $(LIB) $(NVLIB)
 
-$(BUILDPATH)/$(OBJ).o:  $(OBJ).c
-	nvcc  -c $< -o $@ $(NVLIB) $(LIB) $(INC)
+
+all: $(SHARE)
+
+
+%.so:$(OBJS)
+	$(CC) -bundle -flat_namespace -undefined suppress -o $(BUILDPATH)$@ $^ $(INC) $(NVLIB) $(LIB)
+
+%.o:%.c
+	$(GPUCC)  -c $^  -o $@  $(INC) $(LIB) $(NVLIB)
+
+%.o:%.cu
+	$(GPUCC) -c $^ -o $@ $(INC) $(NVLIB) $(LIB)
 
 clean:
-	rm -r $(BUILDPATH)/*.o $(BUILDPATH)/*.so #$(BUILDPATH)/gp_emulator
-
-
-
+	rm *.o $(BUILDPATH)*.so
