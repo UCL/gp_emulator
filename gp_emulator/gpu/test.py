@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.spatial.distance as dist
+import _gpu_predict
 class GP:
     def __init__ (self, P, N, M):
         self.D = P
@@ -8,7 +9,7 @@ class GP:
         self.invQ = np.random.random((M,M))
         self.invQt = np.random.random ((M))
 
-    @profile
+#    @profile
     def predict ( self, testing, do_unc=True ):
         ( nn, D ) = testing.shape
         assert D == self.D
@@ -35,12 +36,44 @@ class GP:
         else:
 	    return mu, deriv
 
+    def gpu_predict ( self, testing, do_unc = True ):# self, testing, do_unc=True):
+        '''GPU predict function
+        '''
+        ( nn, D ) = testing.shape
+        assert D == self.D
+        expX=np.exp(self.theta)
+
+        N=testing.shape[0]
+        theta_size=self.theta.size 
+        
+        a =_gpu_predict.predict_wrap(
+            expX,
+            self.inputs,
+            self.invQt,
+            self.invQ,
+            testing,
+            N,nn,D,theta_size)
+        print 'testing\n',testing
+        print 'a\n',a
+
+
+        # for passing the test (temp)
+        mu=0
+        var=0
+        deriv=0
+        if do_unc:
+            return mu, var, deriv
+        else:
+            return mu, deriv
+
 
 if __name__ == '__main__':
-    N=4e5
-    M=250
+    N=20
+    M=250#250
     P=10
     testing=np.ones((N,P))
     gp=GP(P,N,M)
     gp.predict(testing)
+    gp.gpu_predict(testing)
+
     

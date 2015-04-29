@@ -1,13 +1,13 @@
 //#include<cuda.h>
 #include<stdio.h>
 #include "gpu_predict.h"
-
+#define IDX2C(i,j,ld) (((j)*(ld))+(i))
 
  
 
 
-__global__ void gpu_cdist(float *res, float *a, float *b)
-{
+//__global__ void gpu_cdist(float *res, float *a, float *b)
+//{
 /*
     int i;
      int ix = threadIdx.x+blockDim.x*blockIdx.x;
@@ -23,6 +23,13 @@ __global__ void gpu_cdist(float *res, float *a, float *b)
      res[nx*ix+iy]=sqrt(res[nx*ix+iy]);
 */
 
-}
+//}
 
+__global__
+ void gpu_cdist(double *d_testing)
+{
+        int i = blockIdx.x * blockDim.x + threadIdx.x;
+        int j = blockIdx.y * blockDim.y + threadIdx.y;
+        d_testing[IDX2C(i,j,10)]=j;
+}
 
