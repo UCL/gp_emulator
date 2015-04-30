@@ -46,7 +46,7 @@ class GP:
         N=testing.shape[0]
         M=self.inputs.shape[0]
         theta_size=self.theta.size 
-        print 'expX\n', expX[:(self.D)]*testing
+        print 'expX\n', np.sqrt(expX[:(self.D)]*testing)
 
         a =_gpu_predict.predict_wrap(
             expX,
@@ -70,7 +70,7 @@ class GP:
 
 
 if __name__ == '__main__':
-    N=2e5
+    N=1e6
     M=250#250
     P=10
     testing=np.ones((N,P))
