@@ -15,7 +15,7 @@ class GP:
         assert D == self.D
 
         expX = np.exp ( self.theta )
-        
+              
         a = dist.cdist ( np.sqrt(expX[:(self.D)])*self.inputs, np.sqrt(expX[:(self.D)])*testing, 'sqeuclidean')
         a = expX[self.D]*np.exp(-0.5*a)
         b = expX[self.D]
@@ -44,16 +44,18 @@ class GP:
         expX=np.exp(self.theta)
 
         N=testing.shape[0]
+        M=self.inputs.shape[0]
         theta_size=self.theta.size 
-        
+        print 'expX\n', expX[:(self.D)]*testing
+
         a =_gpu_predict.predict_wrap(
             expX,
             self.inputs,
             self.invQt,
             self.invQ,
             testing,
-            N,nn,D,theta_size)
-        print 'testing\n',testing
+            N,M,D,theta_size)
+        #print 'testing\n',testing
         print 'a\n',a
 
 
@@ -68,12 +70,12 @@ class GP:
 
 
 if __name__ == '__main__':
-    N=20
+    N=2e5
     M=250#250
     P=10
     testing=np.ones((N,P))
     gp=GP(P,N,M)
-    gp.predict(testing)
+    #gp.predict(testing)
     gp.gpu_predict(testing)
 
     

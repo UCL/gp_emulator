@@ -24,12 +24,12 @@
 */
 
 //}
-
+/*
 __global__
- void gpu_cdist(double *d_testing)
+ void gpu_cdist(double )
 {
         int i = blockIdx.x * blockDim.x + threadIdx.x;
         int j = blockIdx.y * blockDim.y + threadIdx.y;
-        d_testing[IDX2C(i,j,10)]=j;
+        d_testing[IDX2C(i,j,blockDim.x)]=i;
 }
-
+*/

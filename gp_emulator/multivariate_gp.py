@@ -192,7 +192,7 @@ class MultivariateEmulator ( object ):
         """Project full-rank vector into PC basis"""
         return X.dot ( self.basis_functions.T ).T
 
-    def predict ( self, y, do_deriv=True ):
+    def predict ( self, y, do_deriv=True ,is_gpu=False):
         """Prediction of input vector
         
         The individual GPs predict the PC weights, and these are used to 
@@ -212,7 +212,11 @@ class MultivariateEmulator ( object ):
         if do_deriv:
             deriv = np.zeros ( ( y.shape[1], self.basis_functions.shape[1] ) )
         for i in xrange ( self.n_pcs ):
-            pred_mu, pred_var, grad = self.emulators[i].predict ( y )
+            if is_gpu == False:
+                pred_mu, pred_var, grad = self.emulators[i].predict ( y )
+            if is_gpu == True:
+                pred_mu, pred_var, grad = self.emulators[i].gpu_predict ( y )
+
             fwd += pred_mu * self.basis_functions[i]
             if do_deriv:
                 deriv += np.matrix(grad).T * np.matrix(self.basis_functions[i])
