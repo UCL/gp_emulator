@@ -28,11 +28,7 @@ void gpu_cdist(const real *input1, const real *input2, real *output, int In1_ld,
     ix = blockIdx.x * blockDim.x + threadIdx.x;//N
     iy = blockIdx.y * blockDim.y + threadIdx.y;//M
     iz = blockIdx.z * blockDim.z + threadIdx.z;
-    //for (iz = 0; iz < D; iz++)
-    //{
-        output[IDX2D(ix, iy, Out_ld)] += pow(input1[IDX2D(iy, iz, In1_ld)] - input2[IDX2D(ix, iz, In2_ld)],2);
-    //}
-
+    output[IDX2D(ix, iy, Out_ld)] += pow(input1[IDX2D(iy, iz, In1_ld)] - input2[IDX2D(ix, iz, In2_ld)],2);
 }
 
 
@@ -41,6 +37,14 @@ void gpu_init_zero(real *vec)
 {
     int ix = blockIdx.x * blockDim.x + threadIdx.x;
     vec[ix] = 0;
+}
+
+// beta = sqrt( alpha * matrix ) 
+__global__
+void gpu_matrixSqrt(real *matrix, real alpha, real beta)
+{
+    int ix = blockIdx.x * blockDim.x + threadIdx.x;
+    matrix[ix] = beta * exp( alpha * matrix[ix]);
 }
 
 
@@ -122,15 +126,6 @@ void predict(real *c_theta_exp, real *c_inputs,real *c_invQt,real *c_invQ, real 
     nthread.x=1; nthread.y=D;
     nblock.x=N; nblock.y=1;
     gpu_vectorTimesMatrix<<<nblock, nthread>>>(d_testing, d_theta_exp_sqrt  , d_res_temp2, N);
-    
-
-// check result of gpu_vectorTimesMatrix
-#undef debug
-#ifdef debug
-
-#endif
-
-
     gpu_init_zero<<<ceil(float(N)*float(M)/512),512>>>(d_a);
 //#undef debug
 #ifdef debug
@@ -149,11 +144,15 @@ void predict(real *c_theta_exp, real *c_inputs,real *c_invQt,real *c_invQ, real 
     free( debug_zero );
 
 #endif
+
+
+
     nthread.x=1;   nthread.y=M;    nthread.z=1;
     nblock.x=N;    nblock.y=1;     nblock.z=D;
-
     gpu_cdist<<<nblock,nthread>>>(d_res_temp1, d_res_temp2, d_a, M, N, N, D);
 
+    gpu_matrixSqrt<<<ceil(float(M)*float(N)/512),512>>>(d_a, -0.5, c_theta_exp[D]);
+    printf("%f", ceil(float(M)*float(N)/512));
 #define debug
 #ifdef debug 
     real *debug_res_temp1, *debug_res_temp2;
@@ -200,21 +199,8 @@ void predict(real *c_theta_exp, real *c_inputs,real *c_invQt,real *c_invQ, real 
 #endif
 
     
-   // cudaFree(d_res_temp1);
-   // cudaFree(d_res_temp2);
 
-    //gpu_cdist<<<1,threads>>>(d_testing,N,);    
-   
-
-       
-    
-//    free(temp_c_a);
     cudaFree(d_theta_exp);
     cudaFree(d_testing);
-
-    //cudaFree(d_aa);
-    //free(c_theta);
-    //free((char*) c_inputs);
-    //return Py_BuildValue ("i",1);
 }
 }
