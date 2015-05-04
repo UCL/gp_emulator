@@ -1,5 +1,5 @@
-SRCS= _gpu_predict.c predict.cu cdist.cu
-OBJS = _gpu_predict.o cdist.o predict.o
+SRCS= _gpu_predict.c predict.cu cdist.cu computeTranspose.c
+OBJS = _gpu_predict.o cdist.o predict.o computeTranspose.o
 SHARE = _gpu_predict.so #$(SRCS:.c=.so) $(CUDASRCS:.cu=.so)
 GPUCC = nvcc
 CC = gcc

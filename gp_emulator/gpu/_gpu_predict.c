@@ -29,6 +29,7 @@ void init_gpu_predict()  {
 
 
 
+
 /* #### Vector Utility functions ######################### */
 
 /* ==== Make a Python Array Obj. from a PyObject, ================
@@ -84,7 +85,7 @@ double **pymatrix_to_Carrayptrs(PyArrayObject *arrayin)  {
     m=arrayin->dimensions[1];
     c=ptrvector(n);
     a=(double *) arrayin->data;  /* pointer to arrayin data as double */
-    for ( i=0; i<n; i++)  {
+    for ( i=0; i < n; i++)  {
         c[i]=a+i*m;  }
     return c;
 }
@@ -95,9 +96,10 @@ double **pymatrix_to_Carrayptrs(PyArrayObject *arrayin)  {
 
 PyObject *predict_wrap ( PyObject *self, PyObject *args )
 {
-    int N,NN,D,theta_size;
+    int N,M,D,theta_size;
     
     PyArrayObject *py_theta_exp, *py_inputs, *py_invQt, *py_invQ, *py_testing;
+    PyArrayObject * temp;
     real *c_theta_exp;
     real *c_inputs, *c_invQt, *c_invQ, *c_testing;
 
@@ -108,15 +110,33 @@ PyObject *predict_wrap ( PyObject *self, PyObject *args )
         &PyArray_Type, &py_invQt,
         &PyArray_Type, &py_invQ,
         &PyArray_Type, &py_testing,
-        &N,&NN,&D,&theta_size);
+        &N, &M, &D,&theta_size);
 
-    c_theta_exp = pyvector_to_Carrayptrs( py_theta_exp );
+
+
+
+    c_theta_exp = pyvector_to_Carrayptrs( py_theta_exp);
     c_inputs = pyvector_to_Carrayptrs( py_inputs );
     c_invQt = pyvector_to_Carrayptrs( py_invQt );
     c_invQ = pyvector_to_Carrayptrs( py_invQ );
     c_testing = pyvector_to_Carrayptrs( py_testing );
+
+
+    //transpose 2D array to column major to cope with cublas
+    computeTranspose( c_invQ, M, M);
+    computeTranspose( c_inputs, D, M);
+    computeTranspose( c_testing, D, N);
+
+    predict(c_theta_exp, c_inputs, c_invQt, c_invQ, c_testing, N, M, D, theta_size);
     
-    predict(c_theta_exp, c_inputs, c_invQt, c_invQ, c_testing, N, NN, D, theta_size);
+    //transpose back to row major
+    computeTranspose( c_testing, N, D);
+    computeTranspose( c_invQ, M, D);
+    computeTranspose( c_inputs, D, M);
+
+    
+
+
     return Py_BuildValue ( "O", PyArray_Return ( py_testing ) );
 }
 
