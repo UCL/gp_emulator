@@ -123,16 +123,16 @@ PyObject *predict_wrap ( PyObject *self, PyObject *args )
 
 
     //transpose 2D array to column major to cope with cublas
-    computeTranspose( c_invQ, M, M);
-    computeTranspose( c_inputs, D, M);
-    computeTranspose( c_testing, D, N);
+    computeTranspose( c_invQ, M, M );
+    computeTranspose( c_inputs, D, M );
+    computeTranspose( c_testing, D, N );
 
-    predict(c_theta_exp, c_inputs, c_invQt, c_invQ, c_testing, N, M, D, theta_size);
+    predict( c_theta_exp, c_inputs, c_invQt, c_invQ, c_testing, N, M, D, theta_size );
     
     //transpose back to row major
-    computeTranspose( c_testing, N, D);
-    computeTranspose( c_invQ, M, D);
-    computeTranspose( c_inputs, D, M);
+    computeTranspose( c_testing, N, D );
+    computeTranspose( c_invQ, M, D );
+    computeTranspose( c_inputs, D, M );
 
     
 

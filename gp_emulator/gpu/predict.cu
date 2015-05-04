@@ -22,14 +22,16 @@ void gpu_vectorTimesMatrix(const real *A, const real * v, real *res, int A_ld)
 // ix -> M; iy -> N; iz -> D
 
 __global__
-void gpu_cdist(const real *input1, const real *input2, real *output, int In1_ld, int In2_ld, int Out_ld)
+void gpu_cdist(const real *input1, const real *input2, real *output, int In1_ld, int In2_ld, int Out_ld, int D)
 {
     int ix, iy, iz;
-    ix = blockIdx.x * blockDim.x + threadIdx.x;
-    iy = blockIdx.y * blockDim.y + threadIdx.y;
+    ix = blockIdx.x * blockDim.x + threadIdx.x;//N
+    iy = blockIdx.y * blockDim.y + threadIdx.y;//M
     iz = blockIdx.z * blockDim.z + threadIdx.z;
-
-    output[IDX2D(ix, iy, Out_ld)] += pow(input1[IDX2D(ix, iz, In1_ld)] - input2[IDX2D(iy, iz, In2_ld)],2);
+    //for (iz = 0; iz < D; iz++)
+    //{
+        output[IDX2D(ix, iy, Out_ld)] += pow(input1[IDX2D(iy, iz, In1_ld)] - input2[IDX2D(ix, iz, In2_ld)],2);
+    //}
 
 }
 
@@ -123,32 +125,9 @@ void predict(real *c_theta_exp, real *c_inputs,real *c_invQt,real *c_invQ, real 
     
 
 // check result of gpu_vectorTimesMatrix
-//#undef debug
+#undef debug
 #ifdef debug
-    real *debug_res_temp1, *debug_res_temp2;
-    debug_res_temp1 = (real *)malloc(sizeof(real) * M * D);
-    debug_res_temp2 = (real *)malloc(sizeof(real) * N * D);
-    cublasCheckErrors(cublasGetMatrix(M, D, sizeof(real), d_res_temp1, M, debug_res_temp1, M));  
-    cublasCheckErrors(cublasGetMatrix(N, D, sizeof(real), d_res_temp2, N, debug_res_temp2, N));
-    computeTranspose(debug_res_temp1, M, D);
-    computeTranspose(debug_res_temp2, N, D);
-    printf("res_temp1\n");
-    for( i = 0 ; i < M * D; i ++)
-    {
-        printf( "%.4f|", debug_res_temp1[i] );
-        if( i % 15 == 0 )
-            printf( "\n" );
-    }
-    printf("\nres_temp2\n");
-    for( i = 0; i < N * D; i ++)
-    {
-        printf( "%.4f|", debug_res_temp2[i] );
-        if( i % 15 == 0 )
-            printf( "\n" );
-    }
-    printf("\n");
-    free(debug_res_temp1);
-    free(debug_res_temp2);
+
 #endif
 
 
@@ -170,24 +149,54 @@ void predict(real *c_theta_exp, real *c_inputs,real *c_invQt,real *c_invQ, real 
     free( debug_zero );
 
 #endif
+    nthread.x=1;   nthread.y=M;    nthread.z=1;
+    nblock.x=N;    nblock.y=1;     nblock.z=D;
 
-    nthread.x=1;   nthread.y=1;    nthread.z=D;
-    nblock.x=M;/*M*/    nblock.y=N;     nblock.z=1;
+    gpu_cdist<<<nblock,nthread>>>(d_res_temp1, d_res_temp2, d_a, M, N, N, D);
 
-    gpu_cdist<<<nblock,nthread>>>(d_res_temp1, d_res_temp2, d_a, M, N, M);
-
+#define debug
 #ifdef debug 
+    real *debug_res_temp1, *debug_res_temp2;
+    debug_res_temp1 = (real *)malloc(sizeof(real) * M * D);
+    debug_res_temp2 = (real *)malloc(sizeof(real) * N * D);
+    cublasCheckErrors(cublasGetMatrix(M, D, sizeof(real), d_res_temp1, M, debug_res_temp1, M));  
+    cublasCheckErrors(cublasGetMatrix(N, D, sizeof(real), d_res_temp2, N, debug_res_temp2, N));
+
     real *temp_c_a;
     temp_c_a = (real *)malloc( sizeof(real) * N * M);
     cudaMemcpy(temp_c_a, d_a, sizeof(real) * N * M, cudaMemcpyDeviceToHost);
-    computeTranspose( temp_c_a, N, M );
-    for( i = 0; i < M * D; i++ )
+
+
+    computeTranspose(debug_res_temp1, M, D);
+    computeTranspose(debug_res_temp2, N, D);
+    // printf("res_temp1\n");
+    // for( i = 0 ; i < M * D; i ++)
+    // {
+    //     printf( "%.4f|", debug_res_temp1[i] );
+    //     if( i % 15 == 0 )
+    //         printf( "\n" );
+    // }
+    // printf("\nres_temp2\n");
+    // for( i = 0; i < N * D; i ++)
+    // {
+    //     printf( "%.4f|", debug_res_temp2[i] );
+    //     if( i % 15 == 0 )
+    //         printf( "\n" );
+    // }
+    // printf("\n");
+
+
+    //computeTranspose( temp_c_a, N, M );
+    for( i = 0; i < M * N; i++ )
     {
         if(i%15==0)
             printf("\n");
         printf("%.4f|", temp_c_a[i]);
     }
     free( temp_c_a );
+    free(debug_res_temp1);
+    free(debug_res_temp2);
+
 #endif
 
     
