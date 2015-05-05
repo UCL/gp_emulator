@@ -147,12 +147,13 @@ void predict(real *c_theta_exp, real *c_inputs,real *c_invQt,real *c_invQ, real 
 
 
 
-    nthread.x=1;   nthread.y=M;    nthread.z=1;
-    nblock.x=N;    nblock.y=1;     nblock.z=D;
+    nthread.x=1;   nthread.y=5;    nthread.z=1;
+    nblock.x=N;    nblock.y=M/5;     nblock.z=D;
     gpu_cdist<<<nblock,nthread>>>(d_res_temp1, d_res_temp2, d_a, M, N, N, D);
 
-    gpu_matrixSqrt<<<ceil(float(M)*float(N)/512),512>>>(d_a, -0.5, c_theta_exp[D]);
-    printf("%f", ceil(float(M)*float(N)/512));
+    //gpu_matrixSqrt<<<ceil(float(M)*float(N)/512),512>>>(d_a, -0.5, c_theta_exp[D]);
+    //printf("%f", ceil(float(M)*float(N)/512));
+
 #define debug
 #ifdef debug 
     real *debug_res_temp1, *debug_res_temp2;
@@ -186,16 +187,15 @@ void predict(real *c_theta_exp, real *c_inputs,real *c_invQt,real *c_invQ, real 
 
 
     //computeTranspose( temp_c_a, N, M );
-    for( i = 0; i < M * N; i++ )
+    for( i = 0; i < M *N ; i++ )
     {
-        if(i%15==0)
+        if(i%15==0 || i%M==0)
             printf("\n");
         printf("%.4f|", temp_c_a[i]);
     }
     free( temp_c_a );
     free(debug_res_temp1);
     free(debug_res_temp2);
-
 #endif
 
     

@@ -30,7 +30,7 @@ PyArrayObject *pyvector(PyObject *objin);
 double *pyvector_to_Carrayptrs(PyArrayObject *arrayin);
 double **pymatrix_to_Carrayptrs(PyArrayObject *arrayin);
 double **ptrvector(long n);
-void computeTranspose(real *matrix, const  int size_in, const  int size_out);
+//void computeTranspose(real *matrix, const  int size_in, const  int size_out);
 PyObject *predict_wrap ( PyObject *self, PyObject *args );
 //void predict(real *c_theta_exp, real **c_inputs,real *c_invQt,real **c_invQ, real **c_testing, int N, int NN, int D, int theta_size);
 //extern "C" void predict(real *c_theta_exp, real *c_inputs,real *c_invQt,real *c_invQ, real *c_testing, int N, int NN, int D, int theta_size);
