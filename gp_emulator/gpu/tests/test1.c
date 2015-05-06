@@ -1,18 +1,17 @@
 #include <stdio.h>
 #include <string.h>
-#include "CUnit/Basic.h"
 #include "gpu_predict_test.h"
+#include "cuda.h"
 
-
-
-
-
-static real * expXsqrt, *inputs, *testing;
-static real * cdist_a;
+/*
+static real *expXsqrt, *inputs, *testing;
+static real *cdist_a;
 static real *cdist_test_var1, *cdist_test_var2, *cdist_test_var3;
  
 
-static int M, N, D;
+static  int M, N, D;
+
+*/
 static int init_suite1(void)
 {
     M = 250;
@@ -66,13 +65,21 @@ int clean_suite(void)
     return 0;
 }
 
-void testFPRINTF(void)
+static void tests_VecTimesMat(void)
 {
-    printf("\ncdist_a[0] = %f\n", cdist_a[0]);
+    dim3 nblocks_1(M,1);
+    dim3 nthreads_1(1,D);
+    testVecTimesMat(expXsqrt, inputs, cdist_test_var1, D, M, D, nblocks_1, nthreads_1 );
+    dim3 nblocks_2(N,1);
+    dim3 nthreads_2(1,D);
+    testVecTimesMat(expXsqrt, testing, cdist_test_var2, D, N, D, nblocks_2, nthreads_2 );
 }
 
 void testFREAD(void)
 {
+    computeTranspose(cdist_a, M, N);
+
+    printf("\ncdist_a[0] = %f\n", cdist_a[1]);
 }
 
 int main()
@@ -92,7 +99,7 @@ int main()
    }
 
    /* add the tests to the suite */
-   if ((NULL == CU_add_test(pSuite, "test of fprintf()", testFPRINTF)) ||
+   if ((NULL == CU_add_test(pSuite, "test of gpu_vectorTimesMatrix", tests_VecTimesMat)) ||
        (NULL == CU_add_test(pSuite, "test of fread()", testFREAD)))
    {
       CU_cleanup_registry();
@@ -111,7 +118,7 @@ int main()
    }
 
    /* add the tests to the suite */
-   if ((NULL == CU_add_test(pSuite, "test of fprintf()", testFPRINTF)) ||
+   if ((NULL == CU_add_test(pSuite, "test of gpu_vectorTimesMatrix", tests_VecTimesMat)) ||
        (NULL == CU_add_test(pSuite, "test of fread()", testFREAD)))
    {
       CU_cleanup_registry();

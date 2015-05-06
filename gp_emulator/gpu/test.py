@@ -36,6 +36,37 @@ class GP:
         else:
 	    return mu, deriv
 
+    def get_testing_val (self, testing, do_unc = True):
+        
+        ( nn, D ) = testing.shape
+        assert D == self.D
+        expX=np.exp(self.theta)
+
+
+        
+        global t_expXsqrt, t_inputs, t_testing
+        t_expXsqrt = np.sqrt(expX[:(self.D)])
+        t_inputs = self.inputs
+        t_testing = testing
+
+        global cdist_test_var_1 ,cdist_test_var_2, cdist_test_var_3
+        cdist_test_var_1= t_expXsqrt * t_inputs #np.sqrt(expX[:(self.D)])*self.inputs
+        cdist_test_var_2 = np.sqrt(expX[:(self.D)])*testing
+        cdist_test_var_3 = dist.cdist ( np.sqrt(expX[:(self.D)])*self.inputs, np.sqrt(expX[:(self.D)])*testing, 'sqeuclidean')
+        cdist_test_var_4 = expX[self.D]*np.exp(-0.5*cdist_test_var_3)
+        
+        
+        
+        
+        
+        t_expXsqrt.tofile("./tests/data/set_%d_%d_%d/expXsqrt.bin"%(N,M,P))
+        t_inputs.tofile("./tests/data/set_%d_%d_%d/inputs.bin"%(N,M,P))
+        t_testing.tofile("./tests/data/set_%d_%d_%d/testing.bin"%(N,M,P))
+        cdist_test_var_1.tofile("./tests/data/set_%d_%d_%d/cdist_test_var1.bin"%(N,M,P))
+        cdist_test_var_2.tofile("./tests/data/set_%d_%d_%d/cdist_test_var2.bin"%(N,M,P))
+        cdist_test_var_3.tofile("./tests/data/set_%d_%d_%d/cdist_a.bin"%(N,M,P))
+    
+    
     def gpu_predict ( self, testing, do_unc = True ):# self, testing, do_unc=True):
         '''GPU predict function
         '''
@@ -46,17 +77,6 @@ class GP:
         N=testing.shape[0]
         M=self.inputs.shape[0]
         theta_size=self.theta.size 
-        global t_expXsqrt, t_inputs, t_testing
-        t_expXsqrt = expX[:(self.D)]
-        t_inputs = self.inputs
-        t_testing = testing
-
-        global cdist_test_var_1 ,cdist_test_var_2, cdist_test_var_3
-        cdist_test_var_1= np.sqrt(expX[:(self.D)])*self.inputs
-        cdist_test_var_2 = np.sqrt(expX[:(self.D)])*testing
-        cdist_test_var_3 = dist.cdist ( np.sqrt(expX[:(self.D)])*self.inputs, np.sqrt(expX[:(self.D)])*testing, 'sqeuclidean')
-        cdist_test_var_4 = expX[self.D]*np.exp(-0.5*cdist_test_var_3)
-
         #print 'sqrt(expX[:(self.D)])*self.inputs=\n', test_var_1
         #print 'sqrt(expX)*testing\n', test_var_2
         #print 'a_ =\n', test_var_3
@@ -89,13 +109,8 @@ if __name__ == '__main__':
     testing=np.random.random((N,P))
     gp=GP(P,N,M)
     #gp.predict(testing)
-    gp.gpu_predict(testing)
-    
+    #gp.gpu_predict(testing)
+    gp.get_testing_val(testing)
     
     #write testing set
-    t_expXsqrt.tofile("./tests/data/set_%d_%d_%d/expXsqrt.bin"%(N,M,P))
-    t_inputs.tofile("./tests/data/set_%d_%d_%d/inputs.bin"%(N,M,P))
-    t_testing.tofile("./tests/data/set_%d_%d_%d/testing.bin"%(N,M,P))
-    cdist_test_var_1.tofile("./tests/data/set_%d_%d_%d/cdist_test_var1.bin"%(N,M,P))
-    cdist_test_var_2.tofile("./tests/data/set_%d_%d_%d/cdist_test_var2.bin"%(N,M,P))
-    cdist_test_var_3.tofile("./tests/data/set_%d_%d_%d/cdist_a.bin"%(N,M,P))
+   
