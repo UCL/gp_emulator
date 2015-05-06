@@ -1,7 +1,7 @@
-SRCS= test1.c  testVecTimesMat.cu \
+SRCS= test1.c  testVecTimesMat.cu testCdist.cu\
       readTestData.c ../computeTranspose.c ../predict.cu
 
-OBJS = test1.o readTestData.o testVecTimesMat.o \
+OBJS = test1.o readTestData.o testVecTimesMat.o testCdist.o \
        ../computeTranspose.o ../predict.o
 GPUCC = nvcc
 CC = gcc

@@ -34,7 +34,10 @@ void computeTranspose(real *matrix, const  int size_in, const  int size_out);
 PyObject *predict_wrap ( PyObject *self, PyObject *args );
 void predict(real *c_theta_exp, real **c_inputs,real *c_invQt,real **c_invQ, real **c_testing, int N, int NN, int D, int theta_size);
 //extern "C" void predict(real *c_theta_exp, real *c_inputs,real *c_invQt,real *c_invQ, real *c_testing, int N, int NN, int D, int theta_size);
-__global__ void gpu_cdist(double *d_testing, int M, int N, int P);
+//__global__ void gpu_cdist(double *d_testing, int M, int N, int P);
+
+__global__
+void gpu_cdist(const real *input1, const real *input2, real *output, int In1_ld, int In2_ld, int Out_ld, int D);
 __global__ void gpu_vectorTimesMatrix(const real *A, const real * v, real *res, int A_ld);
 
 // error check macros
