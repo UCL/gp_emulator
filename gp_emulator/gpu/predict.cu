@@ -41,7 +41,7 @@ void gpu_init_zero(real *vec)
 
 // beta = sqrt( alpha * matrix ) 
 __global__
-void gpu_matrixSqrt(real *matrix, real alpha, real beta)
+void gpu_matrixExp(real *matrix, real alpha, real beta)
 {
     int ix = blockIdx.x * blockDim.x + threadIdx.x;
     matrix[ix] = beta * exp( alpha * matrix[ix]);
@@ -151,7 +151,7 @@ void predict(real *c_theta_exp, real *c_inputs,real *c_invQt,real *c_invQ, real 
     nblock.x=N;    nblock.y=M/5;     nblock.z=D;
     gpu_cdist<<<nblock,nthread>>>(d_res_temp1, d_res_temp2, d_a, M, N, N, D);
 
-    //gpu_matrixSqrt<<<ceil(float(M)*float(N)/512),512>>>(d_a, -0.5, c_theta_exp[D]);
+    gpu_matrixExp<<<ceil(float(M)*float(N)/512),512>>>(d_a, -0.5, c_theta_exp[D]);
     //printf("%f", ceil(float(M)*float(N)/512));
 
 #define debug
