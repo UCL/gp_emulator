@@ -127,23 +127,6 @@ void predict(real *c_theta_exp, real *c_inputs,real *c_invQt,real *c_invQ, real 
     nblock.x=N; nblock.y=1;
     gpu_vectorTimesMatrix<<<nblock, nthread>>>(d_testing, d_theta_exp_sqrt  , d_res_temp2, N);
     gpu_init_zero<<<ceil(float(N)*float(M)/512),512>>>(d_a);
-//#undef debug
-#ifdef debug
-    real * debug_zero;
-    debug_zero = (real *)malloc(sizeof(real) * N * M);
-    cublasCheckErrors(cublasGetMatrix(N, M, sizeof(real), d_a, N, debug_zero, N));  
-    for( i = 0; i < M * N; i ++)
-    {
-        if( debug_zero[i] != 0 )
-        {
-            printf( "[ERROR!] : gpu_init_zero.\n" );
-            exit ( EXIT_FAILURE );            
-        }
-
-    }
-    free( debug_zero );
-
-#endif
 
 
 
@@ -154,49 +137,6 @@ void predict(real *c_theta_exp, real *c_inputs,real *c_invQt,real *c_invQ, real 
     gpu_matrixExp<<<ceil(float(M)*float(N)/512),512>>>(d_a, -0.5, c_theta_exp[D]);
     //printf("%f", ceil(float(M)*float(N)/512));
 
-#define debug
-#ifdef debug 
-    real *debug_res_temp1, *debug_res_temp2;
-    debug_res_temp1 = (real *)malloc(sizeof(real) * M * D);
-    debug_res_temp2 = (real *)malloc(sizeof(real) * N * D);
-    cublasCheckErrors(cublasGetMatrix(M, D, sizeof(real), d_res_temp1, M, debug_res_temp1, M));  
-    cublasCheckErrors(cublasGetMatrix(N, D, sizeof(real), d_res_temp2, N, debug_res_temp2, N));
-
-    real *temp_c_a;
-    temp_c_a = (real *)malloc( sizeof(real) * N * M);
-    cudaMemcpy(temp_c_a, d_a, sizeof(real) * N * M, cudaMemcpyDeviceToHost);
-
-
-    computeTranspose(debug_res_temp1, M, D);
-    computeTranspose(debug_res_temp2, N, D);
-    // printf("res_temp1\n");
-    // for( i = 0 ; i < M * D; i ++)
-    // {
-    //     printf( "%.4f|", debug_res_temp1[i] );
-    //     if( i % 15 == 0 )
-    //         printf( "\n" );
-    // }
-    // printf("\nres_temp2\n");
-    // for( i = 0; i < N * D; i ++)
-    // {
-    //     printf( "%.4f|", debug_res_temp2[i] );
-    //     if( i % 15 == 0 )
-    //         printf( "\n" );
-    // }
-    // printf("\n");
-
-
-    //computeTranspose( temp_c_a, N, M );
-    for( i = 0; i < M *N ; i++ )
-    {
-        if(i%15==0 || i%M==0)
-            printf("\n");
-        printf("%.4f|", temp_c_a[i]);
-    }
-    free( temp_c_a );
-    free(debug_res_temp1);
-    free(debug_res_temp2);
-#endif
 
     
 
