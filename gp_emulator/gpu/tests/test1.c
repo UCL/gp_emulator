@@ -18,6 +18,8 @@ static int init_suite1(void)
     N = 100;
     D = 10;
 
+    invQ            =  readTestData( "invQ.bin", M, N, D, M * M);
+    
     expX            =  readTestData( "expX.bin", M, N, D, D+2);
     expXsqrt        =  readTestData( "expXsqrt.bin", M, N, D, D );
     inputs          =  readTestData( "inputs.bin", M, N, D, M * D );
@@ -26,6 +28,8 @@ static int init_suite1(void)
     cdist_test_var2 =  readTestData( "cdist_test_var2.bin", M, N, D, N * D);
     cdist_a         =  readTestData( "cdist_a.bin", M, N, D, M * N);
     cdist_expa      =  readTestData( "cdist_expa.bin", M, N, D, M * N ); 
+    
+    var_test1       =  readTestData( "var_test1.bin", M, N, D, M * N );
     return 0;
     
 }
@@ -36,7 +40,8 @@ static int init_suite2(void)
     M = 250;
     N = 100;
     D = 10;
-   
+  
+    invQ            =  readTestData( "invQ.bin", M, N, D, M * M );
     expX            =  readTestData( "expX.bin", M, N, D, D+2);
     expXsqrt        =  readTestData( "expXsqrt.bin", M, N, D, D );
     inputs          =  readTestData( "inputs.bin", M, N, D, M * D );
@@ -46,7 +51,7 @@ static int init_suite2(void)
     cdist_a         =  readTestData( "cdist_a.bin", M, N, D, M * N);
     cdist_expa      =  readTestData( "cdist_expa.bin", M, N, D, M * N );
  
-    
+    var_test1       =  readTestData( "var_test1.bin", M, N, D, M * N );   
     return 0;
     
 }
@@ -94,8 +99,10 @@ void tests_matrixExp(void)
     testMatrixExp( cdist_a, cdist_expa, -0.5, expX[D], M * N );
 }
 
-
-
+void tests_cublasgemm(void)
+{
+    testCublasgemm(invQ, cdist_expa, var_test1, M, M, M, N);
+}
 
 
 
@@ -162,7 +169,8 @@ int main()
    /* add the tests to the suite */
    if ((NULL == CU_add_test(pSuite, "test of gpu_vectorTimesMatrix", tests_VecTimesMat)) ||
        (NULL == CU_add_test(pSuite, "test of gpu_cdist", tests_cdist))||
-       (NULL == CU_add_test(pSuite, "test of gpu_MatrixExp", tests_matrixExp))
+       (NULL == CU_add_test(pSuite, "test of gpu_MatrixExp", tests_matrixExp))||
+       (NULL == CU_add_test(pSuite, "test of cublasgemm", tests_cublasgemm))
       )
    {
       CU_cleanup_registry();
