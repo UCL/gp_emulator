@@ -105,11 +105,23 @@ real* gpu_rowSum(const real *A, const int A_nrows,const int A_ncols)
     return d_var;
 }
 
+
+__global__
+void gpu_getAa(const real *inputs,const real *testing, real *aa, const int aa_nrows, const int aa_ncols, const int aa_ld)
+{
+    int ix = blockIdx.x * blockDim.x + threadIdx.x;
+    int iy = blockIdx.y * blockDim.y + threadIdx.y;
+
+    aa[IDX2D(ix, iy, aa_ld)] = inputs[ix] - testing[iy];
+}
+
+
+
 extern "C"{
 void predict(real *c_theta_exp, real *c_inputs,real *c_invQt,real *c_invQ, real *c_testing,  int N, int M, int  D, int theta_size)
 {
     printf("start Gaussian process prediction: (N=%d,nn=%d,D=%d,theta_size=%d)\n",N,M,D,theta_size);   
-    int i;
+    int i,j;
     cublasStatus_t stat;
     cublasHandle_t handle;
     
@@ -169,7 +181,7 @@ void predict(real *c_theta_exp, real *c_inputs,real *c_invQt,real *c_invQ, real 
     nblock.x=N;    nblock.y=M/5;     nblock.z=D;
     gpu_cdist<<<nblock,nthread>>>(d_res_temp1, d_res_temp2, d_a, M, N, N, D);
 
-    gpu_matrixExp<<<ceil(float(M)*float(N)/512),512>>>(d_a, -0.5, c_theta_exp[D]);
+    gpu_matrixExp<<<N,M>>>(d_a, -0.5, c_theta_exp[D]);
    
     
     real *d_mu;
@@ -192,25 +204,52 @@ void predict(real *c_theta_exp, real *c_inputs,real *c_invQt,real *c_invQ, real 
     real *d_var;
     d_var = gpu_rowSum(temp_dot, M, N);
     gpu_scalarMinusVec<<< N, M >>>(d_var, c_theta_exp[D]);
+    
+    cudaFree(temp_dot);
 
 
+real *temp_;
+temp_ = (real *)malloc( sizeof(real) * N * M);
+  
 
+    dim3 nblocks_getaa(1, N);
+    dim3 nthreads_getaa(M,1);
+    real *d_aa;
+    cudaMalloc((void **)&d_aa, sizeof(real) * M * N);
+    real *ptr_inputs, *ptr_testing;
+    ptr_inputs = d_inputs;
+    ptr_testing = d_testing;
 
+    real *d_deriv;
+    cudaMalloc((void **)&d_deriv, sizeof(real) * N);
 
+    for( i = 0; i < D; ++i){
+        gpu_getAa <<< nblocks_getaa, nthreads_getaa >>>(ptr_inputs, ptr_testing, d_aa, M, N, M);
+        ptr_inputs = ptr_inputs + M;
+        ptr_testing = ptr_testing + N;
+        alpha = c_theta_exp[i];
+        
+        gpu_elementwiseMult <<< N, M >>>(d_a_T, d_aa);
+        cublasCheckErrors(cublasDgemv(handle, CUBLAS_OP_T, M, N, &alpha, d_aa, M, d_invQt, 1, &beta, d_deriv,1));
 
 
 #define debug            
 #ifdef debug
-    real *temp_;
-    temp_ = (real *)malloc( sizeof(real) * N * M);
-    //cublasGetMatrix(M, N, sizeof(real), temp_dot, M, temp_,M);
-    cudaMemcpy(temp_, d_var, sizeof(real)* N, cudaMemcpyDeviceToHost);
+   //cublasGetMatrix(M, N, sizeof(real), temp_dot, M, temp_,M);
+    cudaMemcpy(temp_, d_deriv, sizeof(real)* N, cudaMemcpyDeviceToHost);
 //    computeTranspose(temp_, M, N);
-    printf("b=%f\n", c_theta_exp[D]);
-    for( i = 0; i < 10 ; ++i )
-       printf("%.4f|", temp_[i]);
+//    printf("b=%f\n", c_theta_exp[D]);
+    for( j = 0; j < 10 ; ++j )
+       printf("%.4f|", temp_[j]);
+    printf("\n");
 #endif
-    
+ 
+}
+
+
+
+
+
     cudaFree(d_var); 
     cudaFree(d_theta_exp);
     cudaFree(d_testing);

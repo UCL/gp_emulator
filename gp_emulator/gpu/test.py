@@ -22,17 +22,16 @@ class GP:
         
         mu = np.dot( a.T, self.invQt)
         if do_unc:
-        #    print expX[self.D]            
-        #    print "dot\n",np.sum(a * np.dot(self.invQ,a),axis=0)
             var = b - np.sum (  a * np.dot(self.invQ,a), axis=0)
-            print var
         # Derivative and partial derivatives of the function
         deriv = np.zeros ( ( nn, self.D ) )
 
         for d in xrange ( self.D ):
             aa = self.inputs[:,d].flatten()[None,:] - testing[:,d].flatten()[:,None]
+            
             c = a*aa.T
             deriv[:, d] = expX[d]*np.dot(c.T, self.invQt)
+            print deriv[0:10,d]
         if do_unc:
             return mu, var, deriv
         else:
@@ -116,7 +115,7 @@ class GP:
 
 
 if __name__ == '__main__':
-    N=1e4
+    N=3e4
     M=250
     P=10
     testing=np.random.random((N,P))
