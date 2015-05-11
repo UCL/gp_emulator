@@ -21,9 +21,11 @@ class GP:
         b = expX[self.D]
         
         mu = np.dot( a.T, self.invQt)
-
         if do_unc:
-	       var = b - np.sum (  a * np.dot(self.invQ,a), axis=0)
+        #    print expX[self.D]            
+        #    print "dot\n",np.sum(a * np.dot(self.invQ,a),axis=0)
+            var = b - np.sum (  a * np.dot(self.invQ,a), axis=0)
+            print var
         # Derivative and partial derivatives of the function
         deriv = np.zeros ( ( nn, self.D ) )
 
@@ -49,13 +51,18 @@ class GP:
         t_expXsqrt = np.sqrt(expX[:(self.D)])
         t_inputs = self.inputs
         t_testing = testing
+        t_invQ = self.invQ
 
         global cdist_test_var_1 ,cdist_test_var_2, cdist_test_var_3
         cdist_test_var_1= t_expXsqrt * t_inputs #np.sqrt(expX[:(self.D)])*self.inputs
         cdist_test_var_2 = np.sqrt(expX[:(self.D)])*testing
         cdist_test_var_3 = dist.cdist ( np.sqrt(expX[:(self.D)])*self.inputs, np.sqrt(expX[:(self.D)])*testing, 'sqeuclidean')
         cdist_test_var_4 = expX[self.D]*np.exp(-0.5*cdist_test_var_3)
-       
+
+        mu = np.dot( cdist_test_var_4.T, self.invQt)
+
+
+        var_test_1 = np.dot(self.invQ, cdist_test_var_4)
         
         
         
@@ -67,7 +74,12 @@ class GP:
         cdist_test_var_2.tofile("./tests/data/set_%d_%d_%d/cdist_test_var2.bin"%(N,M,P))
         cdist_test_var_3.tofile("./tests/data/set_%d_%d_%d/cdist_a.bin"%(N,M,P))
         cdist_test_var_4.tofile("./tests/data/set_%d_%d_%d/cdist_expa.bin"%(N,M,P))    
-    
+        
+        t_invQ.tofile("./tests/data/set_%d_%d_%d/invQ.bin"%(N,M,P))
+        mu.tofile("./tests/data/set_%d_%d_%d/mu.bin"%(N,M,P))
+        var_test_1.tofile("./tests/data/set_%d_%d_%d/var_test1.bin"%(N,M,P))
+
+
     def gpu_predict ( self, testing, do_unc = True ):# self, testing, do_unc=True):
         '''GPU predict function
         '''
@@ -104,14 +116,14 @@ class GP:
 
 
 if __name__ == '__main__':
-    N=100
-    M=250#250
+    N=1e4
+    M=250
     P=10
     testing=np.random.random((N,P))
     gp=GP(P,N,M)
-    #gp.predict(testing)
-    #gp.gpu_predict(testing)
-    gp.get_testing_val(testing)
+    gp.predict(testing)
+    gp.gpu_predict(testing)
+    #gp.get_testing_val(testing)
     
     #write testing set
    
