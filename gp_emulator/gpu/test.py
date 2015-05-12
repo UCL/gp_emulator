@@ -32,6 +32,7 @@ class GP:
             c = a*aa.T
             deriv[:, d] = expX[d]*np.dot(c.T, self.invQt)
             print deriv[0:10,d]
+
         if do_unc:
             return mu, var, deriv
         else:
@@ -79,6 +80,39 @@ class GP:
         var_test_1.tofile("./tests/data/set_%d_%d_%d/var_test1.bin"%(N,M,P))
 
 
+
+        ( nn, D ) = testing.shape
+        assert D == self.D
+
+        expX = np.exp ( self.theta )
+              
+        a = dist.cdist ( np.sqrt(expX[:(self.D)])*self.inputs, np.sqrt(expX[:(self.D)])*testing, 'sqeuclidean')
+        a = expX[self.D]*np.exp(-0.5*a)
+        b = expX[self.D]
+        
+        mu = np.dot( a.T, self.invQt)
+        if do_unc:
+            var = b - np.sum (  a * np.dot(self.invQ,a), axis=0)
+        # Derivative and partial derivatives of the function
+        deriv = np.zeros ( ( nn, self.D ) )
+
+        for d in xrange ( self.D ):
+            aa = self.inputs[:,d].flatten()[None,:] - testing[:,d].flatten()[:,None]
+            
+            c = a*aa.T
+            deriv[:, d] = expX[d]*np.dot(c.T, self.invQt)
+            print deriv[0:10,d]
+
+        var.tofile("./tests/data/set_%d_%d_%d/var.bin"%(N,M,P))
+        deriv.tofile("./tests/data/set_%d_%d_%d/deriv.bin"%(N,M,P))
+
+        if do_unc:
+            return mu, var, deriv
+        else:
+	    return mu, deriv
+
+
+
     def gpu_predict ( self, testing, do_unc = True ):# self, testing, do_unc=True):
         '''GPU predict function
         '''
@@ -115,14 +149,14 @@ class GP:
 
 
 if __name__ == '__main__':
-    N=3e4
+    N=1000
     M=250
     P=10
     testing=np.random.random((N,P))
     gp=GP(P,N,M)
     gp.predict(testing)
+#    gp.get_testing_val(testing)
     gp.gpu_predict(testing)
-    #gp.get_testing_val(testing)
     
     #write testing set
    

@@ -117,8 +117,10 @@ void gpu_getAa(const real *inputs,const real *testing, real *aa, const int aa_nr
 
 
 
-extern "C"{
-void predict(real *c_theta_exp, real *c_inputs,real *c_invQt,real *c_invQ, real *c_testing,  int N, int M, int  D, int theta_size)
+extern "C"
+{
+void predict(real *c_theta_exp, real *c_inputs,real *c_invQt,real *c_invQ, real *c_testing,  
+        real *c_mu, real *c_var, real *c_deriv, int N, int M, int  D, int theta_size)
 {
     printf("start Gaussian process prediction: (N=%d,nn=%d,D=%d,theta_size=%d)\n",N,M,D,theta_size);   
     int i,j;
@@ -183,47 +185,50 @@ void predict(real *c_theta_exp, real *c_inputs,real *c_invQt,real *c_invQ, real 
 
     gpu_matrixExp<<<N,M>>>(d_a, -0.5, c_theta_exp[D]);
    
-    
+    /*compute mu*/
     real *d_mu;
     cudaMalloc((void **)&d_mu, sizeof(real) * N);
     real alpha = 1.f;
     real beta = 0.f;
-
-   // if( sizeof(real) == sizeof(float) )
-   //     cublasCheckErrors(cublasSgemv(handle, CUBLAS_OP_N, N, M, &alpha, d_a, N, d_invQt, 1, &beta, d_mu, 1));
-    if( sizeof(real) == sizeof(double) )
-        cublasCheckErrors(cublasDgemv(handle, CUBLAS_OP_N, N, M, &alpha, d_a, N, d_invQt, 1, &beta, d_mu, 1));
+    cublasCheckErrors(cublasDgemv(handle, CUBLAS_OP_N, N, M, &alpha, d_a, N, d_invQt, 1, &beta, d_mu, 1));
+    cudaMemcpy(c_mu, d_mu, sizeof(real) * N, cudaMemcpyDeviceToHost);
+       
     
-    real *temp_dot, *d_a_T;
-    cudaMalloc((void **)&temp_dot, sizeof(real) * M * N);
+    
+    /*copute var*/
+    real *d_temp_dot, *d_a_T;
+    real *d_var;
+
+    cudaMalloc((void **)&d_temp_dot, sizeof(real) * M * N);
     cudaMalloc((void **)&d_a_T, sizeof(real) * M * N);
 
-    cublasCheckErrors(cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_T, M, N, M, &alpha, d_invQ, M, d_a, N, &beta, temp_dot, M));
+    cublasCheckErrors(cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_T, M, N, M, &alpha, d_invQ, M, d_a, N, &beta, d_temp_dot, M));
     cublasCheckErrors(cublasDgeam(handle, CUBLAS_OP_T, CUBLAS_OP_N, M, N, &alpha, d_a, N, &beta, d_a, M, d_a_T, M));
-    gpu_elementwiseMult<<< N, M >>>(d_a_T, temp_dot);
-    real *d_var;
-    d_var = gpu_rowSum(temp_dot, M, N);
+    cudaFree(d_a);
+    gpu_elementwiseMult<<< N, M >>>(d_a_T, d_temp_dot);
+       
+    d_var = gpu_rowSum(d_temp_dot, M, N);
     gpu_scalarMinusVec<<< N, M >>>(d_var, c_theta_exp[D]);
+    cudaMemcpy(c_var, d_var, sizeof(real) * N, cudaMemcpyDeviceToHost);
     
-    cudaFree(temp_dot);
+    cudaFree(d_var);
+    cudaFree(d_temp_dot);
 
 
-real *temp_;
-temp_ = (real *)malloc( sizeof(real) * N * M);
-  
+    /*compute deriv*/
+    real *d_deriv;
+    cudaMalloc((void **)&d_deriv, sizeof(real) * N );
 
     dim3 nblocks_getaa(1, N);
     dim3 nthreads_getaa(M,1);
     real *d_aa;
     cudaMalloc((void **)&d_aa, sizeof(real) * M * N);
-    real *ptr_inputs, *ptr_testing;
+    real *ptr_inputs, *ptr_testing, *ptr_deriv;
     ptr_inputs = d_inputs;
     ptr_testing = d_testing;
+    ptr_deriv = c_deriv;
 
-    real *d_deriv;
-    cudaMalloc((void **)&d_deriv, sizeof(real) * N);
-
-    for( i = 0; i < D; ++i){
+     for( i = 0; i < D; ++i){
         gpu_getAa <<< nblocks_getaa, nthreads_getaa >>>(ptr_inputs, ptr_testing, d_aa, M, N, M);
         ptr_inputs = ptr_inputs + M;
         ptr_testing = ptr_testing + N;
@@ -232,26 +237,25 @@ temp_ = (real *)malloc( sizeof(real) * N * M);
         gpu_elementwiseMult <<< N, M >>>(d_a_T, d_aa);
         cublasCheckErrors(cublasDgemv(handle, CUBLAS_OP_T, M, N, &alpha, d_aa, M, d_invQt, 1, &beta, d_deriv,1));
 
-
+        cudaMemcpy(ptr_deriv, d_deriv, sizeof(real) * N, cudaMemcpyDeviceToHost);
 #define debug            
 #ifdef debug
-   //cublasGetMatrix(M, N, sizeof(real), temp_dot, M, temp_,M);
-    cudaMemcpy(temp_, d_deriv, sizeof(real)* N, cudaMemcpyDeviceToHost);
-//    computeTranspose(temp_, M, N);
-//    printf("b=%f\n", c_theta_exp[D]);
-    for( j = 0; j < 10 ; ++j )
-       printf("%.4f|", temp_[j]);
-    printf("\n");
+    
+        for( j = 0; j < 10 ; ++j )
+            printf("%.4f|", ptr_deriv[j]);
+        printf("\n");
 #endif
- 
-}
+        ptr_deriv = ptr_deriv + N;
 
+     }
 
+     cudaFree(d_mu);
 
-
-
-    cudaFree(d_var); 
-    cudaFree(d_theta_exp);
-    cudaFree(d_testing);
+     cudaFree(d_aa);
+     //cudaFree(d_a);
+     cudaFree(d_inputs);
+     cudaFree(d_deriv);
+     cudaFree(d_theta_exp);
+     cudaFree(d_testing);
 }
 }
