@@ -102,6 +102,7 @@ PyObject *predict_wrap ( PyObject *self, PyObject *args )
     PyArrayObject * temp;
     real *c_theta_exp;
     real *c_inputs, *c_invQt, *c_invQ, *c_testing;
+    real *c_mu, *c_var, *c_deriv;
 
 
     PyArg_ParseTuple ( args, "O!O!O!O!O!iiii",
@@ -113,7 +114,7 @@ PyObject *predict_wrap ( PyObject *self, PyObject *args )
         &N, &M, &D,&theta_size);
 
 
-
+    
 
     c_theta_exp = pyvector_to_Carrayptrs( py_theta_exp);
     c_inputs = pyvector_to_Carrayptrs( py_inputs );
@@ -121,19 +122,24 @@ PyObject *predict_wrap ( PyObject *self, PyObject *args )
     c_invQ = pyvector_to_Carrayptrs( py_invQ );
     c_testing = pyvector_to_Carrayptrs( py_testing );
 
-
+    c_mu = (real *)malloc(sizeof(real) * N);
+    c_var = (real *)malloc(sizeof(real) * N);
+    c_deriv = (real *)malloc(sizeof(real) * N * D);
     //transpose 2D array to column major to cope with cublas
     computeTranspose( c_invQ, M, M );
     computeTranspose( c_inputs, D, M );
     computeTranspose( c_testing, D, N );
 
-    predict( c_theta_exp, c_inputs, c_invQt, c_invQ, c_testing, N, M, D, theta_size );
+    predict( c_theta_exp, c_inputs, c_invQt, c_invQ, c_testing, 
+            c_mu, c_var, c_deriv,
+            N, M, D, theta_size );
+
     
-    //transpose back to row major
+    /*transpose back to row major
     computeTranspose( c_testing, N, D );
     computeTranspose( c_invQ, M, D );
     computeTranspose( c_inputs, D, M );
-
+    */
     
 
 

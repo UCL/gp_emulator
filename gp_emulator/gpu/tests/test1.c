@@ -15,10 +15,11 @@ static  int M, N, D;
 static int init_suite1(void)
 {
     M = 250;
-    N = 100;
+    N = 3e4;
     D = 10;
 
     invQ            =  readTestData( "invQ.bin", M, N, D, M * M);
+    invQt           =  readTestData( "invQt.bin", M, N, D, M );
     
     expX            =  readTestData( "expX.bin", M, N, D, D+2);
     expXsqrt        =  readTestData( "expXsqrt.bin", M, N, D, D );
@@ -30,6 +31,10 @@ static int init_suite1(void)
     cdist_expa      =  readTestData( "cdist_expa.bin", M, N, D, M * N ); 
     
     var_test1       =  readTestData( "var_test1.bin", M, N, D, M * N );
+    mu              =  readTestData( "mu.bin", M, N, D, M * N);
+    var             =  readTestData( "var.bin", M, N, D, N);
+    deriv           =  readTestData( "deriv.bin", M, N, D, M * N );
+
     return 0;
     
 }
@@ -42,6 +47,7 @@ static int init_suite2(void)
     D = 10;
   
     invQ            =  readTestData( "invQ.bin", M, N, D, M * M );
+    invQt           =  readTestData( "invQt.bin", M, N, D, M );
     expX            =  readTestData( "expX.bin", M, N, D, D+2);
     expXsqrt        =  readTestData( "expXsqrt.bin", M, N, D, D );
     inputs          =  readTestData( "inputs.bin", M, N, D, M * D );
@@ -52,6 +58,12 @@ static int init_suite2(void)
     cdist_expa      =  readTestData( "cdist_expa.bin", M, N, D, M * N );
  
     var_test1       =  readTestData( "var_test1.bin", M, N, D, M * N );   
+
+    mu              =  readTestData( "mu.bin", M, N, D, M * N);
+    var             =  readTestData( "var.bin", M, N, D, N);
+    deriv           =  readTestData( "deriv.bin", M, N, D, M * N );
+
+
     return 0;
     
 }
@@ -106,7 +118,10 @@ void tests_cublasgemm(void)
 
 
 
-
+void tests_predict(void)
+{
+    testPredict(expX, inputs, invQt, invQ, testing, mu, var, deriv, M, N, D);
+}
 
 
 
@@ -140,50 +155,57 @@ int main()
       return CU_get_error();
 
    /* add a suite to the registry */
-   pSuite = CU_add_suite("Suit_1", init_suite1, clean_suite);
+   pSuite = CU_add_suite("Testing data set (3e4, 250, 10)", init_suite1, clean_suite);
    
    if (NULL == pSuite) {
       CU_cleanup_registry();
       return CU_get_error();
    }
 
-   /* add the tests to the suite */
-   if ((NULL == CU_add_test(pSuite, "test of gpu_vectorTimesMatrix", tests_VecTimesMat)) ||
-       (NULL == CU_add_test(pSuite, "test of fread()", tests_cdist)))
-   {
-      CU_cleanup_registry();
-      return CU_get_error();
-   }
 
-  
- 
-   
-   
-   pSuite = CU_add_suite("Suit_2", init_suite2, clean_suite);
-   
-   if (NULL == pSuite) {
-      CU_cleanup_registry();
-      return CU_get_error();
-   }
-
-   /* add the tests to the suite */
+  /* add the tests to the suite */
    if ((NULL == CU_add_test(pSuite, "test of gpu_vectorTimesMatrix", tests_VecTimesMat)) ||
        (NULL == CU_add_test(pSuite, "test of gpu_cdist", tests_cdist))||
        (NULL == CU_add_test(pSuite, "test of gpu_MatrixExp", tests_matrixExp))||
-       (NULL == CU_add_test(pSuite, "test of cublasgemm", tests_cublasgemm))
+       (NULL == CU_add_test(pSuite, "test of cublasgemm", tests_cublasgemm))||
+       (NULL == CU_add_test(pSuite, "test of gpu_predict", tests_predict))
       )
    {
       CU_cleanup_registry();
       return CU_get_error();
    }
 
-   /* Run all tests using the CUnit Basic interface */
+   //Run all tests using the CUnit Basic interface 
    CU_basic_set_mode(CU_BRM_VERBOSE);
    CU_basic_run_tests();
    CU_cleanup_registry();
    return CU_get_error();
 
-   /* Run all tests using the CUnit Basic interface */
+
+ 
+   
+   
+   pSuite = CU_add_suite("Testing data set (100, 250, 10)", init_suite2, clean_suite);
+   
+   if (NULL == pSuite) {
+      CU_cleanup_registry();
+      return CU_get_error();
+   }
+
+   // add the tests to the suite 
+   if ((NULL == CU_add_test(pSuite, "test of gpu_vectorTimesMatrix", tests_VecTimesMat)) ||
+       (NULL == CU_add_test(pSuite, "test of gpu_cdist", tests_cdist))||
+       (NULL == CU_add_test(pSuite, "test of gpu_MatrixExp", tests_matrixExp))||
+       (NULL == CU_add_test(pSuite, "test of cublasgemm", tests_cublasgemm))||
+       (NULL == CU_add_test(pSuite, "test of gpu_predict", tests_predict))
+     )
+   {
+      CU_cleanup_registry();
+      return CU_get_error();
+   }
+
+
+   // Run all tests using the CUnit Basic interface 
    CU_basic_set_mode(CU_BRM_VERBOSE);
    CU_basic_run_tests();
    CU_cleanup_registry();

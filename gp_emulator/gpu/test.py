@@ -1,6 +1,9 @@
+#!/usr/bin/python
 import numpy as np
 import scipy.spatial.distance as dist
 import _gpu_predict
+import time
+
 class GP:
     def __init__ (self, P, N, M):
         self.D = P
@@ -31,7 +34,7 @@ class GP:
             
             c = a*aa.T
             deriv[:, d] = expX[d]*np.dot(c.T, self.invQt)
-            print deriv[0:10,d]
+            #print deriv[0:10,d]
 
         if do_unc:
             return mu, var, deriv
@@ -78,7 +81,7 @@ class GP:
         t_invQ.tofile("./tests/data/set_%d_%d_%d/invQ.bin"%(N,M,P))
         mu.tofile("./tests/data/set_%d_%d_%d/mu.bin"%(N,M,P))
         var_test_1.tofile("./tests/data/set_%d_%d_%d/var_test1.bin"%(N,M,P))
-
+        self.invQt.tofile("./tests/data/set_%d_%d_%d/invQt.bin"%(N,M,P))
 
 
         ( nn, D ) = testing.shape
@@ -149,14 +152,23 @@ class GP:
 
 
 if __name__ == '__main__':
-    N=1000
+    N=1.5e5
     M=250
     P=10
     testing=np.random.random((N,P))
     gp=GP(P,N,M)
-    gp.predict(testing)
-#    gp.get_testing_val(testing)
-    gp.gpu_predict(testing)
     
+    start = time.time()
+    gp.predict(testing)
+    end = time.time()
+    cputime = end -start
+    print "cpu time", end - start
+#    gp.get_testing_val(testing)
+    start = time.time()
+    gp.gpu_predict(testing)
+    end =time.time()
+    gputime = end - start
+    print "gpu time", end - start
+    print "speedup:", cputime/gputime, 'x'
     #write testing set
    
