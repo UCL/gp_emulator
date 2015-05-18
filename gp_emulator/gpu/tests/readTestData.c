@@ -8,7 +8,6 @@ real *readTestData(char *file_name, int M, int N, int D, int size)
     char path[200];
     sprintf(path, "data/set_%d_%d_%d/",N, M, D);
     strcat(path,file_name);
-    printf("reading data: %s\n",path);
     
     real *data;
     

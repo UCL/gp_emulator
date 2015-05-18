@@ -117,10 +117,9 @@ void gpu_getAa(const real *inputs,const real *testing, real *aa, const int aa_nr
 
 
 
-extern "C"
-{
-void predict(real *c_theta_exp, real *c_inputs,real *c_invQt,real *c_invQ, real *c_testing,  
-        real *c_mu, real *c_var, real *c_deriv, int N, int M, int  D, int theta_size)
+extern "C" {
+void predict(const real *c_theta_exp, const real *c_inputs,const real *c_invQt,const real *c_invQ, const real *c_testing,  
+        real *c_mu, real *c_var, real *c_deriv,const int N,const int M, const int  D, const int theta_size)
 {
     printf("start Gaussian process prediction: (N=%d,nn=%d,D=%d,theta_size=%d)\n",N,M,D,theta_size);   
     int i,j;
@@ -238,7 +237,7 @@ void predict(real *c_theta_exp, real *c_inputs,real *c_invQt,real *c_invQ, real 
         cublasCheckErrors(cublasDgemv(handle, CUBLAS_OP_T, M, N, &alpha, d_aa, M, d_invQt, 1, &beta, d_deriv,1));
 
         cudaMemcpy(ptr_deriv, d_deriv, sizeof(real) * N, cudaMemcpyDeviceToHost);
-#define debug            
+#undef debug            
 #ifdef debug
     
         for( j = 0; j < 10 ; ++j )
