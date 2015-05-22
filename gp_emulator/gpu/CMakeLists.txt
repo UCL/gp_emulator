@@ -1,7 +1,7 @@
 cmake_minimum_required (VERSION 2.8)
 
 
-include(lookoff.cmake)
+include(LookUp-GreatCMakeCookOff.cmake)
 find_package(Numpy REQUIRED)
 find_package(CoherentPython REQUIRED)
 find_package(CUDA QUIET REQUIRED)
