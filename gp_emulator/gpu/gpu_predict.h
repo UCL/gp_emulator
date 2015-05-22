@@ -55,6 +55,7 @@ __global__ void gpu_matrixExp(real *matrix, real alpha, real beta);
                 (int)(__err), \
                 __FILE__, __LINE__); \
             fprintf(stderr, "*** FAILED - ABORTING\n"); \
-            exit(1); \
+	    exit(1);\
         } \
     } while (0)
+

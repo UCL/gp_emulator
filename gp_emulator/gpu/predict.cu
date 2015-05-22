@@ -78,6 +78,7 @@ void gpu_scalarMinusVec(real *vec, const real scalar)
 {
     int ix = blockIdx.x * blockDim.x + threadIdx.x;
     vec[ix] = scalar - vec[ix];
+
 }
 
 
@@ -95,8 +96,8 @@ real* gpu_rowSum(const real *A, const int A_nrows,const int A_ncols)
     cudaMalloc((void **)&vec_one, sizeof(real) * A_ncols );
     cudaMalloc((void **)&d_var, sizeof(real) * A_ncols);
     
-    gpu_init_array<<< ceil(float(A_ncols)/512), 512 >>>(vec_one, 1);
-    gpu_init_array<<< ceil(float(A_ncols)/512),512 >>>(d_var, 0);
+    gpu_init_array<<< ceil(float(A_ncols)/1024), 1024 >>>(vec_one, 1);
+    gpu_init_array<<< ceil(float(A_ncols)/1024), 1024 >>>(d_var, 0);
 
     cublasCheckErrors(cublasDgemv(handle, CUBLAS_OP_T, A_nrows, A_ncols, &alpha, A, A_nrows, vec_one, 1, &beta, d_var, 1));
     
@@ -138,7 +139,7 @@ void predict(const real *c_theta_exp, const real *c_inputs,const real *c_invQt,c
 
     //define device vector and matrices
     real *d_inputs, *d_theta_exp, *d_theta_exp_sqrt, *d_invQt, *d_invQ, *d_testing;
-    real *d_a;//, *d_deriv;
+    real *d_a;
 
 
     //allocate and copy vector on device 
@@ -173,18 +174,36 @@ void predict(const real *c_theta_exp, const real *c_inputs,const real *c_invQt,c
     dim3 nthread(1,D);
     dim3 nblock(M,1);
     gpu_vectorTimesMatrix<<<nblock, nthread>>>(d_inputs, d_theta_exp_sqrt, d_res_temp1, M);
-    nthread.x=1; nthread.y=D;
-    nblock.x=N; nblock.y=1;
+    nthread.x=100; nthread.y=D;
+    nblock.x=N/100; nblock.y=1;
     gpu_vectorTimesMatrix<<<nblock, nthread>>>(d_testing, d_theta_exp_sqrt  , d_res_temp2, N);
-    gpu_init_array<<<ceil(float(N)*float(M)/512),512>>>(d_a, 0);
+    gpu_init_array<<<ceil(float(N)*float(M)/1024),1024>>>(d_a, 0);
 
-    nthread.x=1;   nthread.y=5;    nthread.z=1;
-    nblock.x=N;    nblock.y=M/5;     nblock.z=D;
+    nthread.x=200;   nthread.y=5;    nthread.z=1;
+    nblock.x=N/200;  nblock.y=M/5;     nblock.z=D;
     gpu_cdist<<<nblock,nthread>>>(d_res_temp1, d_res_temp2, d_a, M, N, N, D);
-
-    gpu_matrixExp<<<N,M>>>(d_a, -0.5, c_theta_exp[D]);
+    
+    nthread.x=1000; nthread.y=1; nthread.z=1;
+    nblock.x=N*M/1000; nblock.y=1; nblock.z=1;
+    gpu_matrixExp<<<nblock,nthread>>>(d_a, -0.5, c_theta_exp[D]);
    
-    /*compute mu*/
+int kk;
+/*#undef debug
+#ifdef debug
+real *h_a;
+h_a=(real *)malloc(sizeof(real) * M * N);
+cudaMemcpy(h_a, d_a, sizeof(real) * M * N, cudaMemcpyDeviceToHost);
+
+for(kk =0; kk<10; kk++)
+  printf("%f|", h_a[kk]);
+  printf("\n");
+#endif
+*/
+
+
+      
+
+    //compute mu
     real *d_mu;
     cudaMalloc((void **)&d_mu, sizeof(real) * N);
     real alpha = 1.f;
@@ -194,7 +213,7 @@ void predict(const real *c_theta_exp, const real *c_inputs,const real *c_invQt,c
        
     
     
-    /*copute var*/
+    //copute var
     real *d_temp_dot, *d_a_T;
     real *d_var;
 
@@ -204,22 +223,32 @@ void predict(const real *c_theta_exp, const real *c_inputs,const real *c_invQt,c
     cublasCheckErrors(cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_T, M, N, M, &alpha, d_invQ, M, d_a, N, &beta, d_temp_dot, M));
     cublasCheckErrors(cublasDgeam(handle, CUBLAS_OP_T, CUBLAS_OP_N, M, N, &alpha, d_a, N, &beta, d_a, M, d_a_T, M));
     cudaFree(d_a);
-    gpu_elementwiseMult<<< N, M >>>(d_a_T, d_temp_dot);
-       
+    gpu_elementwiseMult<<< nblock, nthread >>>(d_a_T, d_temp_dot);
+
     d_var = gpu_rowSum(d_temp_dot, M, N);
-    gpu_scalarMinusVec<<< N, M >>>(d_var, c_theta_exp[D]);
-    cudaMemcpy(c_var, d_var, sizeof(real) * N, cudaMemcpyDeviceToHost);
     
+/*    
+#ifdef debug
+cudaMemcpy(h_a, d_var, sizeof(real) * N, cudaMemcpyDeviceToHost);
+for(kk =0; kk<10; kk++)
+  printf("%f|", h_a[kk]);
+  printf("\n");
+#endif
+*/  
+  //change
+    gpu_scalarMinusVec<<<N/1000, 1000 >>>(d_var, c_theta_exp[D]);
+    cudaMemcpy(c_var, d_var, sizeof(real) * N, cudaMemcpyDeviceToHost);
+
     cudaFree(d_var);
     cudaFree(d_temp_dot);
 
 
-    /*compute deriv*/
+    //compute deriv
     real *d_deriv;
     cudaMalloc((void **)&d_deriv, sizeof(real) * N );
 
-    dim3 nblocks_getaa(1, N);
-    dim3 nthreads_getaa(M,1);
+    dim3 nblocks_getaa(M, N/1000);
+    dim3 nthreads_getaa(1,1000);
     real *d_aa;
     cudaMalloc((void **)&d_aa, sizeof(real) * M * N);
     real *ptr_inputs, *ptr_testing, *ptr_deriv;
@@ -232,12 +261,11 @@ void predict(const real *c_theta_exp, const real *c_inputs,const real *c_invQt,c
         ptr_inputs = ptr_inputs + M;
         ptr_testing = ptr_testing + N;
         alpha = c_theta_exp[i];
-        
-        gpu_elementwiseMult <<< N, M >>>(d_a_T, d_aa);
+        gpu_elementwiseMult <<< nblock, nthread >>>(d_a_T, d_aa);
         cublasCheckErrors(cublasDgemv(handle, CUBLAS_OP_T, M, N, &alpha, d_aa, M, d_invQt, 1, &beta, d_deriv,1));
 
         cudaMemcpy(ptr_deriv, d_deriv, sizeof(real) * N, cudaMemcpyDeviceToHost);
-#undef debug            
+#define debug            
 #ifdef debug
     
         for( j = 0; j < 10 ; ++j )
@@ -251,10 +279,10 @@ void predict(const real *c_theta_exp, const real *c_inputs,const real *c_invQt,c
      cudaFree(d_mu);
 
      cudaFree(d_aa);
-     //cudaFree(d_a);
      cudaFree(d_inputs);
      cudaFree(d_deriv);
      cudaFree(d_theta_exp);
      cudaFree(d_testing);
+   
 }
 }
