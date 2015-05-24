@@ -11,11 +11,26 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
+#define DOUBLE__PRECISION
 
-#define real double
+#ifdef DOUBLE__PRECISION
+  #define real double
+#else
+  #define real float
+#endif 
 
-//#ifndef GPU_PREDICT_H
-//#define GPU_PREDICT_H
+
+
+#ifdef DOUBLE__PRECISION
+  #define CUBLAS_GEMV cublasDgemv
+  #define CUBLAS_GEMM cublasDgemm
+  #define CUBLAS_GEAM cublasDgeam
+#else 
+  #define CUBLAS_GEMV cublasSgemv
+  #define CUBLAS_GEMM cublasSgemm
+  #define CUBLAS_GEAM cublasSgeam
+#endif
+
 
 
 PyArrayObject *pyvector(PyObject *objin);

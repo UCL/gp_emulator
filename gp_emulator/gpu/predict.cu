@@ -3,6 +3,7 @@
 //#define IDX2C(i,j,ld) (((j)*(ld))+(i))
 #define IDX2D(i,j,ld) (((j)*(ld))+(i))  //!! keep it in column major for coping with cublas column major fashion.
 #define debug 
+#define CUDA_BLOCK 2
 // x -> i -> col
 // y -> j -> row
 // leading dimension should always be column
@@ -33,17 +34,28 @@ void gpu_cdist(const real *input1, const real *input2, real *output, int In1_ld,
 
 
 __global__
-void gpu_init_array(real *vec, const real init_val)
+void gpu_init_array(real *vec, const real init_val, const int size)
 {
+    int i, index;
     int ix = blockIdx.x * blockDim.x + threadIdx.x;
-    vec[ix] = init_val;
+    for( i = 0; i < CUDA_BLOCK; ++i )
+    {
+        index = ix * CUDA_BLOCK + i;
+        if( index < size)
+        {
+            vec[index] = init_val;
+        }
+    }
+//    vec[ix]=init_val;
 }
 // further tests needed: ix exceed M*N
 __global__
 void gpu_matrixExp(real *matrix, real alpha, real beta)
 {
+    int i;
     int ix = blockIdx.x * blockDim.x + threadIdx.x;
-    matrix[ix] = beta * exp( alpha * matrix[ix]);
+    for( i = 0; i < CUDA_BLOCK; ++i )
+        matrix[ix * CUDA_BLOCK + i] = beta * exp( alpha * matrix[ix * CUDA_BLOCK + i]);
 }
 
 
@@ -66,10 +78,20 @@ void computeTranspose(real *matrix, const  int size_in, const  int size_out)
 }
 
 __global__
-void gpu_elementwiseMult(const real *v1, real *v2)
+void gpu_elementwiseMult(const real *v1, real *v2, const int size)
 {
+    int i, index;
     int ix = blockIdx.x * blockDim.x + threadIdx.x;
-    v2[ix] = v2[ix] * v1[ix];
+    for( i = 0; i < CUDA_BLOCK; ++i )
+    {
+        index = ix * CUDA_BLOCK + i;
+        if( index < size)
+        {
+            v2[index] = v2[index] * v1[index];
+        }
+    }
+
+
 }
 
 
@@ -96,10 +118,12 @@ real* gpu_rowSum(const real *A, const int A_nrows,const int A_ncols)
     cudaMalloc((void **)&vec_one, sizeof(real) * A_ncols );
     cudaMalloc((void **)&d_var, sizeof(real) * A_ncols);
     
-    gpu_init_array<<< ceil(float(A_ncols)/1024), 1024 >>>(vec_one, 1);
-    gpu_init_array<<< ceil(float(A_ncols)/1024), 1024 >>>(d_var, 0);
+    gpu_init_array<<< ceil(float(A_ncols)/512/float(CUDA_BLOCK)), 512 >>>(vec_one, 1, A_ncols);
+    gpu_init_array<<< ceil(float(A_ncols)/512/float(CUDA_BLOCK)), 512 >>>(d_var, 0, A_ncols);
+    //gpu_init_array<<< ceil(float(A_ncols)/128), 128 >>>(vec_one, 1);
+    //gpu_init_array<<< ceil(float(A_ncols)/128), 128>>>(d_var, 0);
 
-    cublasCheckErrors(cublasDgemv(handle, CUBLAS_OP_T, A_nrows, A_ncols, &alpha, A, A_nrows, vec_one, 1, &beta, d_var, 1));
+    cublasCheckErrors(CUBLAS_GEMV(handle, CUBLAS_OP_T, A_nrows, A_ncols, &alpha, A, A_nrows, vec_one, 1, &beta, d_var, 1));
     
     cudaFree(vec_one);
     cublasDestroy(handle);
@@ -170,25 +194,25 @@ void predict(const real *c_theta_exp, const real *c_inputs,const real *c_invQt,c
     cudaMalloc((void **)&d_res_temp2, sizeof(real) * N * D);
     
 
-
     dim3 nthread(1,D);
     dim3 nblock(M,1);
     gpu_vectorTimesMatrix<<<nblock, nthread>>>(d_inputs, d_theta_exp_sqrt, d_res_temp1, M);
     nthread.x=100; nthread.y=D;
     nblock.x=N/100; nblock.y=1;
     gpu_vectorTimesMatrix<<<nblock, nthread>>>(d_testing, d_theta_exp_sqrt  , d_res_temp2, N);
-    gpu_init_array<<<ceil(float(N)*float(M)/1024),1024>>>(d_a, 0);
+    gpu_init_array<<<ceil(float(N)*float(M)/1000/float(CUDA_BLOCK)),1000>>>(d_a, 0, N * M);
+    //gpu_init_array<<<ceil(float(N)*float(M)/1024),1024>>>(d_a, 0);
 
     nthread.x=200;   nthread.y=5;    nthread.z=1;
     nblock.x=N/200;  nblock.y=M/5;     nblock.z=D;
     gpu_cdist<<<nblock,nthread>>>(d_res_temp1, d_res_temp2, d_a, M, N, N, D);
     
     nthread.x=1000; nthread.y=1; nthread.z=1;
-    nblock.x=N*M/1000; nblock.y=1; nblock.z=1;
+    nblock.x=ceil(float(N) * float(M) / float(CUDA_BLOCK)/1000); nblock.y=1; nblock.z=1;
     gpu_matrixExp<<<nblock,nthread>>>(d_a, -0.5, c_theta_exp[D]);
    
 int kk;
-/*#undef debug
+/*#undef debug*/
 #ifdef debug
 real *h_a;
 h_a=(real *)malloc(sizeof(real) * M * N);
@@ -198,7 +222,7 @@ for(kk =0; kk<10; kk++)
   printf("%f|", h_a[kk]);
   printf("\n");
 #endif
-*/
+
 
 
       
@@ -208,7 +232,7 @@ for(kk =0; kk<10; kk++)
     cudaMalloc((void **)&d_mu, sizeof(real) * N);
     real alpha = 1.f;
     real beta = 0.f;
-    cublasCheckErrors(cublasDgemv(handle, CUBLAS_OP_N, N, M, &alpha, d_a, N, d_invQt, 1, &beta, d_mu, 1));
+    cublasCheckErrors(CUBLAS_GEMV(handle, CUBLAS_OP_N, N, M, &alpha, d_a, N, d_invQt, 1, &beta, d_mu, 1));
     cudaMemcpy(c_mu, d_mu, sizeof(real) * N, cudaMemcpyDeviceToHost);
        
     
@@ -220,10 +244,10 @@ for(kk =0; kk<10; kk++)
     cudaMalloc((void **)&d_temp_dot, sizeof(real) * M * N);
     cudaMalloc((void **)&d_a_T, sizeof(real) * M * N);
 
-    cublasCheckErrors(cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_T, M, N, M, &alpha, d_invQ, M, d_a, N, &beta, d_temp_dot, M));
-    cublasCheckErrors(cublasDgeam(handle, CUBLAS_OP_T, CUBLAS_OP_N, M, N, &alpha, d_a, N, &beta, d_a, M, d_a_T, M));
+    cublasCheckErrors(CUBLAS_GEMM(handle, CUBLAS_OP_N, CUBLAS_OP_T, M, N, M, &alpha, d_invQ, M, d_a, N, &beta, d_temp_dot, M));
+    cublasCheckErrors(CUBLAS_GEAM(handle, CUBLAS_OP_T, CUBLAS_OP_N, M, N, &alpha, d_a, N, &beta, d_a, M, d_a_T, M));
     cudaFree(d_a);
-    gpu_elementwiseMult<<< nblock, nthread >>>(d_a_T, d_temp_dot);
+    gpu_elementwiseMult<<< nblock, nthread >>>(d_a_T, d_temp_dot, M * N);
 
     d_var = gpu_rowSum(d_temp_dot, M, N);
     
@@ -261,8 +285,8 @@ for(kk =0; kk<10; kk++)
         ptr_inputs = ptr_inputs + M;
         ptr_testing = ptr_testing + N;
         alpha = c_theta_exp[i];
-        gpu_elementwiseMult <<< nblock, nthread >>>(d_a_T, d_aa);
-        cublasCheckErrors(cublasDgemv(handle, CUBLAS_OP_T, M, N, &alpha, d_aa, M, d_invQt, 1, &beta, d_deriv,1));
+        gpu_elementwiseMult <<< nblock, nthread >>>(d_a_T, d_aa, M * N);
+        cublasCheckErrors(CUBLAS_GEMV(handle, CUBLAS_OP_T, M, N, &alpha, d_aa, M, d_invQt, 1, &beta, d_deriv,1));
 
         cudaMemcpy(ptr_deriv, d_deriv, sizeof(real) * N, cudaMemcpyDeviceToHost);
 #define debug            
