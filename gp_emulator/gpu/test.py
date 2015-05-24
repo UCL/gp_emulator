@@ -34,7 +34,7 @@ class GP:
             
             c = a*aa.T
             deriv[:, d] = expX[d]*np.dot(c.T, self.invQt)
-            #print deriv[0:10,d]
+            print deriv[0:10,d]
 
         if do_unc:
             return mu, var, deriv
@@ -129,7 +129,7 @@ class GP:
         #print 'sqrt(expX[:(self.D)])*self.inputs=\n', test_var_1
         #print 'sqrt(expX)*testing\n', test_var_2
         #print 'a_ =\n', test_var_3
-
+        
         a =_gpu_predict.predict_wrap(
             expX,
             self.inputs,

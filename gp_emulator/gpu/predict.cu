@@ -286,7 +286,11 @@ for(kk =0; kk<10; kk++)
         ptr_testing = ptr_testing + N;
         alpha = c_theta_exp[i];
         gpu_elementwiseMult <<< nblock, nthread >>>(d_a_T, d_aa, M * N);
+<<<<<<< HEAD
         cublasCheckErrors(CUBLAS_GEMV(handle, CUBLAS_OP_T, M, N, &alpha, d_aa, M, d_invQt, 1, &beta, d_deriv,1));
+=======
+        cublasCheckErrors(cublasDgemv(handle, CUBLAS_OP_T, M, N, &alpha, d_aa, M, d_invQt, 1, &beta, d_deriv,1));
+>>>>>>> ea03cc4e48ef0941dc20b4ccbaf87d97dcae727c
 
         cudaMemcpy(ptr_deriv, d_deriv, sizeof(real) * N, cudaMemcpyDeviceToHost);
 #define debug            
