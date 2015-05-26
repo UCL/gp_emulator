@@ -1,4 +1,3 @@
-#!/usr/bin/python
 import numpy as np
 import scipy.spatial.distance as dist
 import _gpu_predict
@@ -159,7 +158,7 @@ class GP:
 
 
 if __name__ == '__main__':
-    N=1.5e5
+    N=1.8e6
     M=250
     P=10
     testing=np.random.random((N,P))

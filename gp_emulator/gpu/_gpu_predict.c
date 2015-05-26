@@ -1,16 +1,6 @@
 
 #include "gpu_predict.h"
 
-
-
-// PyArrayObject *pymatrix(PyObject *objin);
-// double **pymatrix_to_Carrayptrs(PyArrayObject *arrayin);
-// double **ptrvector(long n);
-// void free_Carrayptrs(double **v);
-// int  not_doublematrix(PyArrayObject *mat);
-
-
-
 /* ==== Set up the methods table ====================== */
 static PyMethodDef gpuMethods[] = {
     {"predict_wrap", predict_wrap, METH_VARARGS},

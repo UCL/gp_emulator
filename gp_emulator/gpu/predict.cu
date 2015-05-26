@@ -3,7 +3,7 @@
 //#define IDX2C(i,j,ld) (((j)*(ld))+(i))
 #define IDX2D(i,j,ld) (((j)*(ld))+(i))  //!! keep it in column major for coping with cublas column major fashion.
 #define debug 
-#define CUDA_BLOCK 2
+#define CUDA_BLOCK 7
 // x -> i -> col
 // y -> j -> row
 // leading dimension should always be column
@@ -201,16 +201,18 @@ void predict(const real *c_theta_exp, const real *c_inputs,const real *c_invQt,c
     nblock.x=N/100; nblock.y=1;
     gpu_vectorTimesMatrix<<<nblock, nthread>>>(d_testing, d_theta_exp_sqrt  , d_res_temp2, N);
     gpu_init_array<<<ceil(float(N)*float(M)/1000/float(CUDA_BLOCK)),1000>>>(d_a, 0, N * M);
-    //gpu_init_array<<<ceil(float(N)*float(M)/1024),1024>>>(d_a, 0);
 
     nthread.x=200;   nthread.y=5;    nthread.z=1;
     nblock.x=N/200;  nblock.y=M/5;     nblock.z=D;
     gpu_cdist<<<nblock,nthread>>>(d_res_temp1, d_res_temp2, d_a, M, N, N, D);
+
     
     nthread.x=1000; nthread.y=1; nthread.z=1;
     nblock.x=ceil(float(N) * float(M) / float(CUDA_BLOCK)/1000); nblock.y=1; nblock.z=1;
     gpu_matrixExp<<<nblock,nthread>>>(d_a, -0.5, c_theta_exp[D]);
-   
+
+    cudaFree(d_res_temp1);
+    cudaFree(d_res_temp2);
 int kk;
 /*#undef debug*/
 #ifdef debug
