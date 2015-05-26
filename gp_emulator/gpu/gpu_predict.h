@@ -11,7 +11,7 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
-#define DOUBLE__PRECISION
+//#define DOUBLE__PRECISION
 
 #ifdef DOUBLE__PRECISION
   #define real double
@@ -34,9 +34,9 @@
 
 
 PyArrayObject *pyvector(PyObject *objin);
-double *pyvector_to_Carrayptrs(PyArrayObject *arrayin);
-double **pymatrix_to_Carrayptrs(PyArrayObject *arrayin);
-double **ptrvector(long n);
+real*pyvector_to_Carrayptrs(PyArrayObject *arrayin);
+real **pymatrix_to_Carrayptrs(PyArrayObject *arrayin);
+real **ptrvector(long n);
 void computeTranspose(real *matrix, const  int size_in, const  int size_out);
 PyObject *predict_wrap ( PyObject *self, PyObject *args );
 /*

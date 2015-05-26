@@ -130,13 +130,20 @@ class GP:
         #print 'sqrt(expX)*testing\n', test_var_2
         #print 'a_ =\n', test_var_3
         
-        a =_gpu_predict.predict_wrap(
-            expX,
-            self.inputs,
-            self.invQt,
-            self.invQ,
-            testing,
-            N,M,D,theta_size)
+#        a =_gpu_predict.predict_wrap(
+#            expX,
+#            self.inputs,
+#            self.invQt,
+#            self.invQ,
+#            testing,
+#            N,M,D,theta_size)
+        a = _gpu_predict.predict_wrap(
+                np.float32(expX),
+                np.float32(self.inputs),
+                np.float32(self.invQt),
+                np.float32(self.invQ),
+                np.float32(testing),
+                N, M, D, theta_size)
         #print 'testing\n',testing
         #print 'a\n',a
 

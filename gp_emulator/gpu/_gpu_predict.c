@@ -2,7 +2,6 @@
 #include "gpu_predict.h"
 
 
-#define real double
 
 // PyArrayObject *pymatrix(PyObject *objin);
 // double **pymatrix_to_Carrayptrs(PyArrayObject *arrayin);
@@ -40,25 +39,42 @@ void init_gpu_predict()  {
      PyArray_BuildValue with the "N" construct   !!!
 */
 PyArrayObject *pyvector(PyObject *objin)  {
-    return (PyArrayObject *) PyArray_ContiguousFromObject(objin,
-        NPY_DOUBLE, 1,1);
+    if( sizeof( real ) == sizeof( double ) )
+        return (PyArrayObject *) PyArray_ContiguousFromObject(objin,NPY_DOUBLE, 1,1);
+    if( sizeof( real ) == sizeof( float ) )
+        return (PyArrayObject *) PyArray_ContiguousFromObject(objin,NPY_FLOAT32, 1,1);
+
 }
 /* ==== Create 1D Carray from PyArray ======================
     Assumes PyArray is contiguous in memory.             */
-double *pyvector_to_Carrayptrs(PyArrayObject *arrayin)  {
+real *pyvector_to_Carrayptrs(PyArrayObject *arrayin)  {
     int i,n;
     
     n=arrayin->dimensions[0];
-    return (double *) arrayin->data;  /* pointer to arrayin data as double */
+    return (real *) arrayin->data;  /* pointer to arrayin data as double */
 }
 /* ==== Check that PyArrayObject is a double (Float) type and a vector ==============
     return 1 if an error and raise exception */ 
-int  not_doublevector(PyArrayObject *vec)  {
-    if (vec->descr->type_num != NPY_DOUBLE || vec->nd != 1)  {
-        PyErr_SetString(PyExc_ValueError,
-            "In not_doublevector: array must be of type Float and 1 dimensional (n).");
-        return 1;  }
-    return 0;
+int  not_realvector(PyArrayObject *vec)  {
+    if( sizeof( real ) == sizeof( double ) )
+    {
+        if (vec->descr->type_num != NPY_DOUBLE || vec->nd != 1)  
+        {
+            PyErr_SetString(PyExc_ValueError, "In not_realvector: array must be of type Float and 1 dimensional (n).");
+            return 1;  
+        }
+        return 0;
+    }
+    if( sizeof( real ) == sizeof( float ) ) 
+    {
+        if (vec->descr->type_num != NPY_FLOAT32 || vec->nd != 1)  
+        {
+            PyErr_SetString(PyExc_ValueError, "In not_realvector: array must be of type Float and 1 dimensional (n).");
+            return 1;  
+        }
+        return 0;
+    }
+ 
 }
 
 
@@ -67,24 +83,24 @@ int  not_doublevector(PyArrayObject *vec)  {
     Assumes PyArray is contiguous in memory.
     Memory is allocated!                                    */
 
-double **ptrvector(long n)  {
-    double **v;
-    v=(double **)malloc((size_t) (n*sizeof(double)));
+real **ptrvector(long n)  {
+    real **v;
+    v=(real **)malloc((size_t) (n*sizeof(real)));
     if (!v)   {
-        printf("In **ptrvector. Allocation of memory for double array failed.");
+        printf("In **ptrvector. Allocation of memory for real array failed.");
         exit(0);  }
     return v;
 }
 
 
-double **pymatrix_to_Carrayptrs(PyArrayObject *arrayin)  {
-    double **c, *a;
+real **pymatrix_to_Carrayptrs(PyArrayObject *arrayin)  {
+    real **c, *a;
     int i,n,m;
     
     n=arrayin->dimensions[0];
     m=arrayin->dimensions[1];
     c=ptrvector(n);
-    a=(double *) arrayin->data;  /* pointer to arrayin data as double */
+    a=(real *) arrayin->data;  /* pointer to arrayin data as double */
     for ( i=0; i < n; i++)  {
         c[i]=a+i*m;  }
     return c;
