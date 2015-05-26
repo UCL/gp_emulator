@@ -4,7 +4,7 @@
 
 void testCdist(const real *in1,const real *in2, const real *res, const int in1_nrows, const int in2_nrows, const int in_ncols,  const dim3 nblocks, const dim3 nthreads)
 {
-    int i, j, k;
+    int i, j, k, error;
     real epsilon;
     real *in1_T, *in2_T, *gpu_res;
     real *d_in1, *d_in2, *d_res; 
@@ -20,7 +20,6 @@ void testCdist(const real *in1,const real *in2, const real *res, const int in1_n
 
     computeTranspose( in1_T, in_ncols, in1_nrows );
     computeTranspose( in2_T, in_ncols, in2_nrows );
-    
     
     
 /*    for( i = 0; i < in1_nrows * in2_nrows; i++ )
@@ -51,22 +50,25 @@ void testCdist(const real *in1,const real *in2, const real *res, const int in1_n
     cudaMalloc((void **)&d_in1, sizeof(real) * in1_nrows * in_ncols );
     cudaMalloc((void **)&d_in2, sizeof(real) * in2_nrows * in_ncols );
     cudaMalloc((void **)&d_res, sizeof(real) * in2_nrows * in1_nrows );
-
     cublasCheckErrors(cublasSetMatrix( in1_nrows, in_ncols, sizeof(real), in1_T, in1_nrows, d_in1, in1_nrows) );
     cublasCheckErrors(cublasSetMatrix( in2_nrows, in_ncols, sizeof(real), in2_T, in2_nrows, d_in2, in2_nrows) );
     cublasCheckErrors(cublasSetMatrix( in2_nrows, in1_nrows, sizeof(real), gpu_res, in2_nrows, d_res,in2_nrows) );
     gpu_cdist <<< nblocks, nthreads  >>>(d_in1, d_in2, d_res, in1_nrows, in2_nrows, in2_nrows, in_ncols);
-    
     cudaMemcpy(gpu_res, d_res, sizeof(real) * in2_nrows * in1_nrows, cudaMemcpyDeviceToHost);
-
+    
+    error = 0;
     for( i = 0; i < in1_nrows * in2_nrows; i++ )
     {
         epsilon = abs( res[i] - gpu_res[i] );
-        CU_ASSERT( epsilon < 1e-6 );
+        if( epsilon > 1e-6 )
+            error++;
     }
-
+    if( error != 0)
+        printf( "\n cdist: error > 1e-6 %f\%[%d/%d]\n", (float)(error)/(float)(in1_nrows*in2_nrows), error, in1_nrows*in2_nrows );
  
-   
+    CU_PASS( error == 0);
+  
+
    free(in1_T);
    free(in2_T);
    free(gpu_res);

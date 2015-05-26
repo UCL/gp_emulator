@@ -1,35 +1,9 @@
 #include "gpu_predict_test.h"
 #include <time.h>
 
-
-
-
-int main()
+void testPredict(const real *expX, const real *inputs, const real *invQt, const real *invQ, const real *testing, 
+        const real *mu, const real *var, const real *deriv, int M, int N, int D)
 {
-    
-    real *invQ, *invQt, *expX, *inputs, *testing;
-    
-    int M = 250;
-    int N = 1.5e5;
-    int D = 10;
-
-    invQ            =  readTestData( "invQ.bin", M, N, D, M * M);
-    invQt           =  readTestData( "invQt.bin", M, N, D, M );
-
-    expX            =  readTestData( "expX.bin", M, N, D, D+2);
-    inputs          =  readTestData( "inputs.bin", M, N, D, M * D );
-    testing         =  readTestData( "testing.bin", M, N, D, N * D );
-
-//    mu              =  readTestData( "mu.bin", M, N, D, M * N);
-//    var             =  readTestData( "var.bin", M, N, D, N);
-//    deriv           =  readTestData( "deriv.bin", M, N, D, M * N );
-
-
-
-
-
-
-
 
     int i;
     real e;
@@ -77,6 +51,23 @@ int main()
     printf("\n");
     printf("      -total time including matrix transposing = %f (sec)\n", (double)(end1-begin1)/CLOCKS_PER_SEC);
     printf("      -pure predict function = %f (sec)\n", (double)(end2-begin2)/CLOCKS_PER_SEC);
+    for( i = 0; i < N * D; ++i )
+    {
+        e = abs( gpu_deriv[i] - deriv[i] );
+        CU_ASSERT( e < 1e-6 );
+    }
+
+    for( i = 0; i < N; ++i )
+    {
+        e = abs( gpu_mu[i] - mu[i] );
+        CU_ASSERT( e < 1e-6);
+    }
+
+    for( i = 0; i < N; ++i)
+    {
+        e = abs( gpu_var[i] - var[i] );
+        CU_ASSERT( e < 1e-6 );
+    }
 
 
         

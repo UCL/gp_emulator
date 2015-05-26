@@ -39,10 +39,11 @@ real **pymatrix_to_Carrayptrs(PyArrayObject *arrayin);
 real **ptrvector(long n);
 void computeTranspose(real *matrix, const  int size_in, const  int size_out);
 PyObject *predict_wrap ( PyObject *self, PyObject *args );
-/*
-extern "C"
+
+
+//extern "C"
 void predict(const real *c_theta_exp,const  real *c_inputs,const real *c_invQt, const real *c_invQ, const real *c_testing, real *c_mu, real *c_var, real *c_deriv, const int N, const int M, const int  D, const int theta_size);
-*/
+//*/
 __global__ void gpu_cdist(const real *input1, const real *input2, real *output, int In1_ld, int In2_ld, int Out_ld, int D);
 __global__ void gpu_vectorTimesMatrix(const real *A, const real * v, real *res, int A_ld);
 __global__ void gpu_matrixExp(real *matrix, real alpha, real beta);

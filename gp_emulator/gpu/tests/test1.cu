@@ -92,10 +92,10 @@ static void tests_VecTimesMat(void)
 {
     dim3 nblocks_1(M,1);
     dim3 nthreads_1(1,D);
-    testVecTimesMat(expXsqrt, inputs, cdist_test_var1, D, M, D, nblocks_1, nthreads_1 );
+//    testVecTimesMat(expXsqrt, inputs, cdist_test_var1, D, M, D, nblocks_1, nthreads_1 );
     dim3 nblocks_2(N/50,1);
     dim3 nthreads_2(50,D);
-    testVecTimesMat(expXsqrt, testing, cdist_test_var2, D, N, D, nblocks_2, nthreads_2 );
+//    testVecTimesMat(expXsqrt, testing, cdist_test_var2, D, N, D, nblocks_2, nthreads_2 );
 }
 
 void tests_cdist(void)

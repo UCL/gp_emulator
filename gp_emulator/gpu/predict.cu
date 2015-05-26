@@ -59,24 +59,6 @@ void gpu_matrixExp(real *matrix, real alpha, real beta)
 }
 
 
-void computeTranspose(real *matrix, const  int size_in, const  int size_out)
-{
-    real * temp;
-    temp = ( real *)malloc(sizeof(real) * size_in * size_out);
-
-    for ( int i = 0; i < size_in * size_out; ++i)
-        temp[i] = matrix[i];
-
-    for (int y = 0; y < size_out; ++y)
-    {
-        for (int x = 0; x < size_in; ++x)
-        {
-            matrix[(x * size_out) + y] = temp[(y * size_in) + x];                                                                
-
-        }   
-    }
-}
-
 __global__
 void gpu_elementwiseMult(const real *v1, real *v2, const int size)
 {
@@ -142,7 +124,7 @@ void gpu_getAa(const real *inputs,const real *testing, real *aa, const int aa_nr
 
 
 
-extern "C" {
+//extern "C" {
 void predict(const real *c_theta_exp, const real *c_inputs,const real *c_invQt,const real *c_invQ, const real *c_testing,  
         real *c_mu, real *c_var, real *c_deriv,const int N,const int M, const int  D, const int theta_size)
 {
@@ -311,4 +293,4 @@ for(kk =0; kk<10; kk++)
      cudaFree(d_testing);
    
 }
-}
+//}

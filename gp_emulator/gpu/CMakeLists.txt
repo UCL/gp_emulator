@@ -12,8 +12,10 @@ include_directories(${NUMPY_INCLUDE_DIRS}/numpy)
 
 set(CUBLAS_TARGET_LINK ${FOUND_CUBLAS})
 
-cuda_add_library(_gpu_predict _gpu_predict.c predict.cu computeTranspose.c MODULE)
+cuda_add_library(_gpu_predict _gpu_predict.cu predict.cu computeTranspose.cu MODULE)
 SET_TARGET_PROPERTIES(_gpu_predict  PROPERTIES PREFIX "")
 cuda_add_cublas_to_target(_gpu_predict)
 
-#target_link_libraries(python_predict python)
+target_link_libraries(_gpu_predict python)
+
+subdirs(tests)
