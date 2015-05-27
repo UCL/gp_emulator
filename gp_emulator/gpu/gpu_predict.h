@@ -12,7 +12,8 @@
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
 //#define DOUBLE__PRECISION
-
+#define CUDA_BLOCK 7
+ 
 #ifdef DOUBLE__PRECISION
   #define real double
 #else

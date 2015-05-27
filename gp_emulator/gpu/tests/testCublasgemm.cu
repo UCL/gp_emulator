@@ -45,7 +45,7 @@ void testCublasgemm(const real *c_mat1, const real *c_mat2, const real *c_res, c
 
     real alpha = 1.f;
     real beta = 0.f;
-    cublasCheckErrors( cublasDgemm( handle, CUBLAS_OP_N, CUBLAS_OP_T, 
+    cublasCheckErrors( CUBLAS_GEMM( handle, CUBLAS_OP_N, CUBLAS_OP_T, 
                 mat1_nrows, mat2_ncols,  mat1_ncols,
                 &alpha, 
                 d_mat1, mat1_nrows, 
@@ -58,14 +58,18 @@ void testCublasgemm(const real *c_mat1, const real *c_mat2, const real *c_res, c
  
 
     computeTranspose(c_gpu_res, mat1_nrows, mat2_ncols); 
-    
+    int error;
     for(i = 0; i < mat1_nrows * mat2_ncols; i++)
     {
-        e = abs( c_gpu_res[i] - c_res[i] );
-        CU_ASSERT( e < 1e-6 );
-   }
-*/
+        if( abs( c_gpu_res[i] - c_res[i] ) > epsilon )
+            error++;
+    }
+    
+    if( error != 0 )
+        printf("  ERROR: cublasgemm [%d/%d]   ", error, mat1_nrows*mat2_ncols);
+    CU_ASSERT( error == 0);
 
+*/
 
 
 

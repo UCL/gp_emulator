@@ -6,7 +6,6 @@ void testPredict(const real *expX, const real *inputs, const real *invQt, const 
 {
 
     int i;
-    real e;
 
     clock_t begin1, begin2, end1, end2;
 
@@ -51,24 +50,40 @@ void testPredict(const real *expX, const real *inputs, const real *invQt, const 
     printf("\n");
     printf("      -total time including matrix transposing = %f (sec)\n", (double)(end1-begin1)/CLOCKS_PER_SEC);
     printf("      -pure predict function = %f (sec)\n", (double)(end2-begin2)/CLOCKS_PER_SEC);
+    
+    int e_deriv = 0;
     for( i = 0; i < N * D; ++i )
     {
-        e = abs( gpu_deriv[i] - deriv[i] );
-        CU_ASSERT( e < 1e-6 );
+        if(abs( gpu_deriv[i] - deriv[i] ) > epsilon )
+            e_deriv++;
     }
+    CU_ASSERT(e_deriv == 0);
+    if( e_deriv != 0 )
+        printf( "  ERROR: deriv [%d/%d]   ", e_deriv, N * D );
 
+    int e_mu = 0;
     for( i = 0; i < N; ++i )
     {
-        e = abs( gpu_mu[i] - mu[i] );
-        CU_ASSERT( e < 1e-6);
+        if( abs( gpu_mu[i] - mu[i] ) > epsilon )
+        e_mu++;
     }
+    CU_ASSERT(e_mu == 0);
+    if( e_mu != 0 )
+        printf( "  ERROR: mu [%d/%d]   ", e_mu, N );
 
+
+    int e_var = 0;
     for( i = 0; i < N; ++i)
     {
-        e = abs( gpu_var[i] - var[i] );
-        CU_ASSERT( e < 1e-6 );
+        if( abs( gpu_var[i] - var[i] ) > epsilon )
+            e_var++;
     }
+    CU_ASSERT( e_var == 0 );
+    if( e_var != 0 )
+        printf( "  ERROR: var [%d/%d]   ", e_var, N );
 
+
+   
 
         
     free(invQ_T);

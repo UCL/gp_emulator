@@ -11,7 +11,6 @@ void testVecTimesMat(const real *c_vec,const  real *c_mat, const real *c_res,con
 
     CU_ASSERT (vec_len == mat_ncols);
     int i;
-    int epsilon;
     cudaMalloc((void **)&d_vec, sizeof(real) * vec_len );
     cudaMalloc((void **)&d_mat, sizeof(real) * mat_nrows * mat_ncols );
     cudaMalloc((void **)&d_res, sizeof(real) * mat_nrows * mat_ncols );
@@ -32,13 +31,14 @@ void testVecTimesMat(const real *c_vec,const  real *c_mat, const real *c_res,con
     cudaMemcpy(c_res_gpu, d_res, sizeof(real) * mat_nrows * mat_ncols, cudaMemcpyDeviceToHost);
     computeTranspose(c_res_gpu, mat_nrows, mat_ncols);
     
+    int error = 0;
     for( i = 0; i < mat_nrows * mat_ncols; i++)
     {
-        epsilon = abs( c_res[i] - c_res_gpu[i] );
-        CU_ASSERT( epsilon < 1e-6 );
-//        if( epsilon < 1e-6 )
-//            printf("res [%d] = %f   gpu result [%d] = %f\n",i, c_res[i], i, c_res_gpu[i]);
+        if( abs(c_res[i] - c_res_gpu[i]) > epsilon )
+            error++;
     }
+    
+    CU_ASSERT( error == 0);
 
     free(c_res_gpu);
     free(c_mat_T);

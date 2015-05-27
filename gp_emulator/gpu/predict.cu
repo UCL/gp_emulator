@@ -3,7 +3,7 @@
 //#define IDX2C(i,j,ld) (((j)*(ld))+(i))
 #define IDX2D(i,j,ld) (((j)*(ld))+(i))  //!! keep it in column major for coping with cublas column major fashion.
 #define debug 
-#define CUDA_BLOCK 7
+//#define CUDA_BLOCK 7
 // x -> i -> col
 // y -> j -> row
 // leading dimension should always be column
@@ -196,7 +196,7 @@ void predict(const real *c_theta_exp, const real *c_inputs,const real *c_invQt,c
     cudaFree(d_res_temp1);
     cudaFree(d_res_temp2);
 int kk;
-/*#undef debug*/
+#undef debug
 #ifdef debug
 real *h_a;
 h_a=(real *)malloc(sizeof(real) * M * N);
@@ -273,7 +273,8 @@ for(kk =0; kk<10; kk++)
         cublasCheckErrors(CUBLAS_GEMV(handle, CUBLAS_OP_T, M, N, &alpha, d_aa, M, d_invQt, 1, &beta, d_deriv,1));
 
         cudaMemcpy(ptr_deriv, d_deriv, sizeof(real) * N, cudaMemcpyDeviceToHost);
-#define debug            
+#define debug
+#undef debug
 #ifdef debug
     
         for( j = 0; j < 10 ; ++j )

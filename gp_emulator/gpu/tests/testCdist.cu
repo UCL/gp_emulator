@@ -5,7 +5,6 @@
 void testCdist(const real *in1,const real *in2, const real *res, const int in1_nrows, const int in2_nrows, const int in_ncols,  const dim3 nblocks, const dim3 nthreads)
 {
     int i, j, k, error;
-    real epsilon;
     real *in1_T, *in2_T, *gpu_res;
     real *d_in1, *d_in2, *d_res; 
 
@@ -22,25 +21,6 @@ void testCdist(const real *in1,const real *in2, const real *res, const int in1_n
     computeTranspose( in2_T, in_ncols, in2_nrows );
     
     
-/*    for( i = 0; i < in1_nrows * in2_nrows; i++ )
-        gpu_res[i] = 0;
-    for( i = 0; i < in2_nrows; i++)
-    {
-        for( j = 0; j < in1_nrows; j++ )
-        {
-            for( k = 0; k < in_ncols; k++ )
-            {
-                gpu_res[IDX2D(i, j, in2_nrows)] += pow(in1_T[IDX2D(j, k, in1_nrows)] - in2_T[IDX2D(i, k, in2_nrows)],2);
-            }
-        }
-    }
-    
-    for( i = 0; i < in1_nrows * in2_nrows; i++ )
-    {
-        epsilon = abs( res[i] - gpu_res[i] );
-        CU_ASSERT( epsilon < 1e-6 );
-    }
-*/
     
     /*GPU part*/
     for( i = 0; i < in1_nrows * in2_nrows; i++ )
@@ -59,15 +39,13 @@ void testCdist(const real *in1,const real *in2, const real *res, const int in1_n
     error = 0;
     for( i = 0; i < in1_nrows * in2_nrows; i++ )
     {
-        epsilon = abs( res[i] - gpu_res[i] );
-        if( epsilon > 1e-6 )
-            error++;
+         if( abs( res[i] - gpu_res[i] ) > epsilon )
+             error++;
     }
     if( error != 0)
-        printf( "\n cdist: error > 1e-6 %f\%[%d/%d]\n", (float)(error)/(float)(in1_nrows*in2_nrows), error, in1_nrows*in2_nrows );
+        printf( "  cdist: [%d/%d]\n", error, in1_nrows*in2_nrows );
  
-    CU_PASS( error == 0);
-  
+   CU_ASSERT( error == 0 );
 
    free(in1_T);
    free(in2_T);
