@@ -1,11 +1,7 @@
 #include "gpu_predict.h"
 #include <stdlib.h>
-//#define IDX2C(i,j,ld) (((j)*(ld))+(i))
 #define IDX2D(i,j,ld) (((j)*(ld))+(i))  //!! keep it in column major for coping with cublas column major fashion.
 #define debug 
-//#define CUDA_BLOCK 7
-// x -> i -> col
-// y -> j -> row
 // leading dimension should always be column
 /*********************************************//** 
  * vector matrix elementwise multiplication
@@ -102,8 +98,6 @@ real* gpu_rowSum(const real *A, const int A_nrows,const int A_ncols)
     
     gpu_init_array<<< ceil(float(A_ncols)/512/float(CUDA_BLOCK)), 512 >>>(vec_one, 1, A_ncols);
     gpu_init_array<<< ceil(float(A_ncols)/512/float(CUDA_BLOCK)), 512 >>>(d_var, 0, A_ncols);
-    //gpu_init_array<<< ceil(float(A_ncols)/128), 128 >>>(vec_one, 1);
-    //gpu_init_array<<< ceil(float(A_ncols)/128), 128>>>(d_var, 0);
 
     cublasCheckErrors(CUBLAS_GEMV(handle, CUBLAS_OP_T, A_nrows, A_ncols, &alpha, A, A_nrows, vec_one, 1, &beta, d_var, 1));
     
@@ -124,7 +118,6 @@ void gpu_getAa(const real *inputs,const real *testing, real *aa, const int aa_nr
 
 
 
-//extern "C" {
 void predict(const real *c_theta_exp, const real *c_inputs,const real *c_invQt,const real *c_invQ, const real *c_testing,  
         real *c_mu, real *c_var, real *c_deriv,const int N,const int M, const int  D, const int theta_size)
 {
@@ -294,4 +287,3 @@ for(kk =0; kk<10; kk++)
      cudaFree(d_testing);
    
 }
-//}

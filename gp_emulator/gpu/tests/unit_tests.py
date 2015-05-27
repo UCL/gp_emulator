@@ -83,7 +83,7 @@ class GP:
 
 
 if __name__ == '__main__':
-    N=5e4
+    N=8e4
     M=250
     P=10
     testing=np.random.random((N,P))
