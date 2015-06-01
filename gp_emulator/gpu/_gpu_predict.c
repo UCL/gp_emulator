@@ -99,7 +99,6 @@ real **pymatrix_to_Carrayptrs(PyArrayObject *arrayin)  {
 
 
 
-
 PyObject *predict_wrap ( PyObject *self, PyObject *args )
 {
     int N,M,D,theta_size;
@@ -151,11 +150,6 @@ PyObject *predict_wrap ( PyObject *self, PyObject *args )
 
     return Py_BuildValue ( "O", PyArray_Return ( py_testing ) );
 }
-
-
-
-
-
 
 
 

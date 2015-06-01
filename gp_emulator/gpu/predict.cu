@@ -117,7 +117,7 @@ void gpu_getAa(const real *inputs,const real *testing, real *aa, const int aa_nr
 }
 
 
-
+extern "C"{
 void predict(const real *c_theta_exp, const real *c_inputs,const real *c_invQt,const real *c_invQ, const real *c_testing,  
         real *c_mu, real *c_var, real *c_deriv,const int N,const int M, const int  D, const int theta_size)
 {
@@ -286,4 +286,5 @@ for(kk =0; kk<10; kk++)
      cudaFree(d_theta_exp);
      cudaFree(d_testing);
    
+}
 }
