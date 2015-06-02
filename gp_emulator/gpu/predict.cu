@@ -1,10 +1,11 @@
 #include "gpu_predict.h"
 #include <stdlib.h>
-#define IDX2D(i,j,ld) (((j)*(ld))+(i))  //!! keep it in column major for coping with cublas column major fashion.
+#define IDX2D(i,j,ld) (((j)*(ld))+(i))//column major
 #define debug 
-// leading dimension should always be column
+
 /*********************************************//** 
  * vector matrix elementwise multiplication
+ * res_{ix,iy} = A_{ix,iy} * v_{iy}
  *********************************************/
 __global__ 
 void gpu_vectorTimesMatrix(const real *A, const real * v, real *res, int A_ld)
@@ -16,10 +17,14 @@ void gpu_vectorTimesMatrix(const real *A, const real * v, real *res, int A_ld)
 }
 
 
-// ix -> M; iy -> N; iz -> D
-
+/*********************************************//** 
+ * Squared Euclidiean distance function: 
+ * - Equivalent to scipy cdist() function
+ * - In1_ld and In2_ld, are leading dimention of the input1 and input2, 
+ *   in our case it should be always the column. 
+ *********************************************/
 __global__
-void gpu_cdist(const real *input1, const real *input2, real *output, int In1_ld, int In2_ld, int Out_ld, int D)
+void gpu_cdist(const real *input1, const real *input2, real *output, int In1_ld, int In2_ld, int Out_ld)
 {
     int ix, iy, iz;
     ix = blockIdx.x * blockDim.x + threadIdx.x;//N
@@ -179,7 +184,7 @@ void predict(const real *c_theta_exp, const real *c_inputs,const real *c_invQt,c
 
     nthread.x=200;   nthread.y=5;    nthread.z=1;
     nblock.x=N/200;  nblock.y=M/5;     nblock.z=D;
-    gpu_cdist<<<nblock,nthread>>>(d_res_temp1, d_res_temp2, d_a, M, N, N, D);
+    gpu_cdist<<<nblock,nthread>>>(d_res_temp1, d_res_temp2, d_a, M, N, N);
 
     
     nthread.x=1000; nthread.y=1; nthread.z=1;

@@ -33,7 +33,7 @@ void testCdist(const real *in1,const real *in2, const real *res, const int in1_n
     cublasCheckErrors(cublasSetMatrix( in1_nrows, in_ncols, sizeof(real), in1_T, in1_nrows, d_in1, in1_nrows) );
     cublasCheckErrors(cublasSetMatrix( in2_nrows, in_ncols, sizeof(real), in2_T, in2_nrows, d_in2, in2_nrows) );
     cublasCheckErrors(cublasSetMatrix( in2_nrows, in1_nrows, sizeof(real), gpu_res, in2_nrows, d_res,in2_nrows) );
-    gpu_cdist <<< nblocks, nthreads  >>>(d_in1, d_in2, d_res, in1_nrows, in2_nrows, in2_nrows, in_ncols);
+    gpu_cdist <<< nblocks, nthreads  >>>(d_in1, d_in2, d_res, in1_nrows, in2_nrows, in2_nrows);
     cudaMemcpy(gpu_res, d_res, sizeof(real) * in2_nrows * in1_nrows, cudaMemcpyDeviceToHost);
     
     error = 0;
