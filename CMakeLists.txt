@@ -9,5 +9,5 @@ message("export PYTHONPATH=${LIBRARY_OUTPUT_PATH}")
 
 #target_link_libraries(python_predict python)
 
-enable_testing()
-add_test(test build/gp_emulator/gpu/tests/gpu_predict_test 1 1 1)
+#enable_testing()
+#add_test(test build/gp_emulator/gpu/tests/gpu_predict_test 1 1 1)
