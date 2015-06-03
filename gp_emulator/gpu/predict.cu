@@ -135,7 +135,7 @@ extern "C"{
 void predict(const real *c_theta_exp, const real *c_inputs,const real *c_invQt,const real *c_invQ, const real *c_testing,  
         real *c_mu, real *c_var, real *c_deriv,const int N,const int M, const int  D, const int theta_size)
 {
-    printf("start Gaussian process prediction: (N=%d,nn=%d,D=%d,theta_size=%d)\n",N,M,D,theta_size);   
+    //printf("start Gaussian process prediction: (N=%d,nn=%d,D=%d,theta_size=%d)\n",N,M,D,theta_size);   
     int i,j;
     cublasStatus_t stat;
     cublasHandle_t handle;
@@ -238,6 +238,7 @@ for(kk =0; kk<10; kk++)
     cublasCheckErrors(CUBLAS_GEMM(handle, CUBLAS_OP_N, CUBLAS_OP_T, M, N, M, &alpha, d_invQ, M, d_a, N, &beta, d_temp_dot, M));
     cublasCheckErrors(CUBLAS_GEAM(handle, CUBLAS_OP_T, CUBLAS_OP_N, M, N, &alpha, d_a, N, &beta, d_a, M, d_a_T, M));
     cudaFree(d_a);
+    cudaFree(d_invQ);
     gpu_elementwiseMult<<< nblock, nthread >>>(d_a_T, d_temp_dot, M * N);
 
     d_var = gpu_rowSum(d_temp_dot, M, N);
@@ -293,7 +294,8 @@ for(kk =0; kk<10; kk++)
      }
 
      cudaFree(d_mu);
-
+     cudaFree(d_invQt);
+     cudaFree(d_a_T);
      cudaFree(d_aa);
      cudaFree(d_inputs);
      cudaFree(d_deriv);
