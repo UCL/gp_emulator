@@ -1,3 +1,9 @@
+/*********************************************//** 
+ * CUDA implementation of derived from GaussianProcess
+ * in python code. 
+ * 
+ * Sinan Shi (UCL) 
+ *********************************************/
 #include "gpu_predict.h"
 #include <stdlib.h>
 #define IDX2D(i,j,ld) (((j)*(ld))+(i))//column major
@@ -85,7 +91,8 @@ void gpu_elementwiseMult(const real *v1, real *v2, const int size)
 }
 
 /*********************************************//** 
- *
+ * vector scalar operation, update vec by,
+ * vec = scalar - vec
  *********************************************/
 __global__
 void gpu_scalarMinusVec(real *vec, const real scalar)
@@ -95,7 +102,10 @@ void gpu_scalarMinusVec(real *vec, const real scalar)
 
 }
 
-
+/*********************************************//**
+ * row sum:
+ * return vector rowSum(A)
+ *********************************************/
 real* gpu_rowSum(const real *A, const int A_nrows,const int A_ncols)
 {
     cublasStatus_t stat;
@@ -120,7 +130,10 @@ real* gpu_rowSum(const real *A, const int A_nrows,const int A_ncols)
     return d_var;
 }
 
-
+/*********************************************//**
+ * getAa
+ * aa_{ix, iy} = inputs_{ix} - testing_{iy} 
+ *********************************************/
 __global__
 void gpu_getAa(const real *inputs,const real *testing, real *aa, const int aa_nrows, const int aa_ncols, const int aa_ld)
 {
@@ -131,6 +144,13 @@ void gpu_getAa(const real *inputs,const real *testing, real *aa, const int aa_nr
 }
 
 
+
+
+/*********************************************//**
+ * predict function:
+ * This is the corresponding CUDA function of
+ * GaussianPredict:predict in python code.
+ *********************************************/
 extern "C"{
 void predict(const real *c_theta_exp, const real *c_inputs,const real *c_invQt,const real *c_invQ, const real *c_testing,  
         real *c_mu, real *c_var, real *c_deriv,const int N,const int M, const int  D, const int theta_size)
@@ -175,9 +195,11 @@ void predict(const real *c_theta_exp, const real *c_inputs,const real *c_invQt,c
     cudaMalloc((void **)&d_a, sizeof(real) * M * N);
 
         
-    /*********************
-     *cdist
-     *********************/
+    /*********************************
+     * Euclidian distance calculation
+     * a = cidist(sqrt(expX_{,D}) * inputs * sqrt(expX_{,D} * testing)))
+     * Notice: a is equivalent to a^T in python due to column major fashion
+     ********************************/ 
     real *d_res_temp1, *d_res_temp2;
     cudaMalloc((void **)&d_res_temp1, sizeof(real) * M * D);
     cudaMalloc((void **)&d_res_temp2, sizeof(real) * N * D);
@@ -218,7 +240,10 @@ for(kk =0; kk<10; kk++)
 
       
 
-    //compute mu
+    /*********************************
+     * compute mu:
+     * mu = a * invQt (dot product)
+     ********************************/
     real *d_mu;
     cudaMalloc((void **)&d_mu, sizeof(real) * N);
     real alpha = 1.f;
@@ -227,8 +252,10 @@ for(kk =0; kk<10; kk++)
     cudaMemcpy(c_mu, d_mu, sizeof(real) * N, cudaMemcpyDeviceToHost);
        
     
-    
-    //copute var
+   /*********************************
+    * compute var:
+    * var = b - rowsum(a * dot(invQ, a_T))
+    ********************************/
     real *d_temp_dot, *d_a_T;
     real *d_var;
 
@@ -243,15 +270,6 @@ for(kk =0; kk<10; kk++)
 
     d_var = gpu_rowSum(d_temp_dot, M, N);
     
-/*    
-#ifdef debug
-cudaMemcpy(h_a, d_var, sizeof(real) * N, cudaMemcpyDeviceToHost);
-for(kk =0; kk<10; kk++)
-  printf("%f|", h_a[kk]);
-  printf("\n");
-#endif
-*/  
-  //change
     gpu_scalarMinusVec<<<N/1000, 1000 >>>(d_var, c_theta_exp[D]);
     cudaMemcpy(c_var, d_var, sizeof(real) * N, cudaMemcpyDeviceToHost);
 
@@ -259,7 +277,10 @@ for(kk =0; kk<10; kk++)
     cudaFree(d_temp_dot);
 
 
-    //compute deriv
+   /*********************************
+    * compute deriv:
+    * 
+    ********************************/
     real *d_deriv;
     cudaMalloc((void **)&d_deriv, sizeof(real) * N );
 
@@ -284,7 +305,6 @@ for(kk =0; kk<10; kk++)
 #define debug
 #undef debug
 #ifdef debug
-    
         for( j = 0; j < 10 ; ++j )
             printf("%.4f|", ptr_deriv[j]);
         printf("\n");
