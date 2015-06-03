@@ -1,3 +1,4 @@
+#!/usr/local/bin/python
 import numpy as np
 import scipy.spatial.distance as dist
 import _gpu_predict
@@ -158,14 +159,14 @@ class GP:
 
 
 if __name__ == '__main__':
-    N=1.8e6
+    N=1.5e5
     M=250
     P=10
     testing=np.random.random((N,P))
     gp=GP(P,N,M)
     
     start = time.time()
-    gp.predict(testing)
+    #gp.predict(testing)
     end = time.time()
     cputime = end -start
     print "cpu time", end - start

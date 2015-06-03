@@ -33,7 +33,9 @@ void gpu_cdist(const real *input1, const real *input2, real *output, int In1_ld,
     output[IDX2D(ix, iy, Out_ld)] += pow(input1[IDX2D(iy, iz, In1_ld)] - input2[IDX2D(ix, iz, In2_ld)],2);
 }
 
-
+/*********************************************//** 
+ * initialise array with init_val assigned 
+ *********************************************/
 __global__
 void gpu_init_array(real *vec, const real init_val, const int size)
 {
@@ -47,9 +49,12 @@ void gpu_init_array(real *vec, const real init_val, const int size)
             vec[index] = init_val;
         }
     }
-//    vec[ix]=init_val;
 }
-// further tests needed: ix exceed M*N
+
+/*********************************************//** 
+ * Do following operation:
+ * - matrix_{i} = beta * e^{alpha * matrix_{i}}
+ *********************************************/
 __global__
 void gpu_matrixExp(real *matrix, real alpha, real beta)
 {
@@ -59,7 +64,9 @@ void gpu_matrixExp(real *matrix, real alpha, real beta)
         matrix[ix * CUDA_BLOCK + i] = beta * exp( alpha * matrix[ix * CUDA_BLOCK + i]);
 }
 
-
+/*********************************************//** 
+ * vector elementwise multiplication
+ *********************************************/
 __global__
 void gpu_elementwiseMult(const real *v1, real *v2, const int size)
 {
@@ -77,7 +84,9 @@ void gpu_elementwiseMult(const real *v1, real *v2, const int size)
 
 }
 
-
+/*********************************************//** 
+ *
+ *********************************************/
 __global__
 void gpu_scalarMinusVec(real *vec, const real scalar)
 {
