@@ -51,32 +51,19 @@ class GP:
         N=testing.shape[0]
         M=self.inputs.shape[0]
         theta_size=self.theta.size 
-        #print 'sqrt(expX[:(self.D)])*self.inputs=\n', test_var_1
-        #print 'sqrt(expX)*testing\n', test_var_2
-        #print 'a_ =\n', test_var_3
         
-#        a =_gpu_predict.predict_wrap(
-#            expX,
-#            self.inputs,
-#            self.invQt,
-#            self.invQ,
-#            testing,
-#            N,M,D,theta_size)
+        mu = np.float32(np.zeros(N))
+        var = np.float32(np.zeros(N))
+        deriv = np.float32(np.zeros((N,D)))
+
         a = _gpu_predict.predict_wrap(
                 np.float32(expX),
                 np.float32(self.inputs),
                 np.float32(self.invQt),
                 np.float32(self.invQ),
                 np.float32(testing),
+                mu, var, deriv,
                 N, M, D, theta_size)
-        #print 'testing\n',testing
-        #print 'a\n',a
-
-
-        # for passing the test (temp)
-        mu=0
-        var=0
-        deriv=0
         if do_unc:
             return mu, var, deriv
         else:
@@ -84,15 +71,15 @@ class GP:
 
 
 if __name__ == '__main__':
-    for i in xrange(1000, 1800000, 5000):
-    	N=i
+    for i in xrange(1):#xrange(1000, 1800000, 5000):
+    	N=1e5
     	M=250
     	P=10
     	testing=np.random.random((N,P))
     	gp=GP(P,N,M)
     
     	start = time.time()
-    	gp.predict(testing)
+    	#gp.predict(testing)
     	end = time.time()
     	cputime = end -start
     	start = time.time()

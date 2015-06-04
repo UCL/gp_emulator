@@ -44,7 +44,7 @@ PyObject *predict_wrap ( PyObject *self, PyObject *args );
 extern "C"{
 #endif
 void predict(const real *c_theta_exp,const  real *c_inputs,const real *c_invQt, const real *c_invQ, const real *c_testing, real *c_mu, real *c_var, real *c_deriv, const int N, const int M, const int  D, const int theta_size);
-void computeTranspose(real *matrix, const  int size_in, const  int size_out);
+real *computeTranspose(const real *matrix, const  int size_in, const  int size_out);
 
 #ifdef __cplusplus
 }

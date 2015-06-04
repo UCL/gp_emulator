@@ -11,14 +11,14 @@ void testCdist(const real *in1,const real *in2, const real *res, const int in1_n
     in1_T = (real *)malloc( sizeof(real) * in1_nrows * in_ncols );
     in2_T = (real *)malloc( sizeof(real) * in2_nrows * in_ncols );
     gpu_res = (real *)malloc( sizeof(real) * in1_nrows * in2_nrows ); 
-    for( i = 0; i < in1_nrows * in_ncols; i++ )
+    /*for( i = 0; i < in1_nrows * in_ncols; i++ )
         in1_T[i] = in1[i];
 
     for( i = 0; i < in2_nrows * in_ncols; i++ )
         in2_T[i] = in2[i];
-
-    computeTranspose( in1_T, in_ncols, in1_nrows );
-    computeTranspose( in2_T, in_ncols, in2_nrows );
+    */
+    in1_T = computeTranspose( in1, in_ncols, in1_nrows );
+    in2_T = computeTranspose( in2, in_ncols, in2_nrows );
     
     
     

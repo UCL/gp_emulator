@@ -19,8 +19,8 @@ void testCublasgemm(const real *c_mat1, const real *c_mat2, const real *c_res, c
     cudaMalloc( (void **)&d_res, sizeof(real) * mat1_nrows * mat2_ncols );
 
 
-    real *c_mat1_T, *c_mat2_T;
-    c_mat1_T = (real *)malloc(sizeof(real)* mat1_ncols * mat1_nrows);
+    real *c_mat1_T;
+/*    c_mat1_T = (real *)malloc(sizeof(real)* mat1_ncols * mat1_nrows);
     c_mat2_T = (real *)malloc(sizeof(real)* mat2_ncols * mat2_nrows);
 
 
@@ -31,16 +31,16 @@ void testCublasgemm(const real *c_mat1, const real *c_mat2, const real *c_res, c
     for( i = 0; i < mat2_ncols * mat2_nrows; i++ )
         c_mat2_T[i] = c_mat2[i];
 
+  */  
     
     
-    
-   computeTranspose(c_mat1_T, mat1_nrows, mat1_ncols); 
+   c_mat1_T = computeTranspose(c_mat1, mat1_nrows, mat1_ncols); 
 //   computeTranspose(c_mat2_T, mat2_ncols, mat2_nrows);
     
 
 
     cudaMemcpy( d_mat1, c_mat1_T, sizeof(real) * mat1_nrows * mat1_ncols, cudaMemcpyHostToDevice);
-    cudaMemcpy( d_mat2, c_mat2_T, sizeof(real) * mat1_nrows * mat2_ncols, cudaMemcpyHostToDevice);
+    cudaMemcpy( d_mat2, c_mat2, sizeof(real) * mat1_nrows * mat2_ncols, cudaMemcpyHostToDevice);
 
 
     real alpha = 1.f;
@@ -57,7 +57,7 @@ void testCublasgemm(const real *c_mat1, const real *c_mat2, const real *c_res, c
 
  
 
-    computeTranspose(c_gpu_res, mat1_nrows, mat2_ncols); 
+    c_gpu_res = computeTranspose(c_gpu_res, mat1_nrows, mat2_ncols); 
     int error = 0;
     for(i = 0; i < mat1_nrows * mat2_ncols; i++)
     {
@@ -73,7 +73,7 @@ void testCublasgemm(const real *c_mat1, const real *c_mat2, const real *c_res, c
 
 
     free(c_mat1_T);
-    free(c_mat2_T);
+    //free(c_mat2_T);
     cudaFree(d_mat1);
     cudaFree(d_mat2);
     cudaFree(d_res);

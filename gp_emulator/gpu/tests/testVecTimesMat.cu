@@ -18,9 +18,9 @@ void testVecTimesMat(const real *c_vec,const  real *c_mat, const real *c_res,con
     c_mat_T = (real *)malloc( sizeof(real) * mat_nrows * mat_ncols);
     c_res_gpu = (real *)malloc( sizeof(real) * mat_nrows * mat_ncols );
 
-    for( i = 0; i < mat_nrows * mat_ncols; i++ )
-        c_mat_T[i] = c_mat[i];
-    computeTranspose(c_mat_T, mat_ncols, mat_nrows);
+/*    for( i = 0; i < mat_nrows * mat_ncols; i++ )
+        c_mat_T[i] = c_mat[i];*/
+    c_mat_T = computeTranspose(c_mat, mat_ncols, mat_nrows);
 
 
     cublasCheckErrors(cublasSetVector( vec_len, sizeof(real), c_vec, 1, d_vec, 1 ));
@@ -29,7 +29,7 @@ void testVecTimesMat(const real *c_vec,const  real *c_mat, const real *c_res,con
     gpu_vectorTimesMatrix <<< nblock, nthreads >>> ( d_mat, d_vec, d_res, mat_nrows );
 
     cudaMemcpy(c_res_gpu, d_res, sizeof(real) * mat_nrows * mat_ncols, cudaMemcpyDeviceToHost);
-    computeTranspose(c_res_gpu, mat_nrows, mat_ncols);
+    c_res_gpu = computeTranspose(c_res_gpu, mat_nrows, mat_ncols);
     
     int error = 0;
     for( i = 0; i < mat_nrows * mat_ncols; i++)

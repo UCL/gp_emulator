@@ -207,7 +207,7 @@ class GaussianProcess:
         self._set_params ( params[idx])
         return (log_like[idx], params[idx] )
 
-    def predict ( self, testing, do_unc=True ):
+    def cpu_predict ( self, testing, do_unc=True ):
 	"""Make a prediction for a set of input vectors, as well as 
 	calculate the partial derivatives of the emulated model, 
 	and optionally, the "emulation uncertainty". 
@@ -250,6 +250,36 @@ class GaussianProcess:
         else:
 	    return mu, deriv
         
+    def gpu_predict ( self, testing, do_unc = True ):# self, testing, do_unc=True):
+        '''GPU predict function
+        '''
+        ( nn, D ) = testing.shape
+        assert D == self.D
+        expX=np.exp(self.theta)
+        
+        N=testing.shape[0]
+        M=self.inputs.shape[0]
+        theta_size=self.theta.size
+
+        mu = np.float32(np.zeros(N))
+        var = np.float32(np.zeros(N))
+        deriv = np.float32(np.zeros((N,D)))
+        
+        _gpu_predict.predict_wrap(
+                np.float32(expX),
+                np.float32(self.inputs),
+                np.float32(self.invQt),
+                np.float32(self.invQ),
+                np.float32(testing), 
+                mu, var, deriv,
+                N, M, D, theta_size)
+               
+        
+        # for passing the test (temp)
+        return mu, var, deriv
+
+
+        
     def hessian ( self, testing ):
         '''calculates the hessian of the GP for the testing sample. 
            hessian returns a (nn by d by d) array
@@ -273,34 +303,6 @@ class GaussianProcess:
                 hess[:, d,d2] = np.dot(cc.T, self.invQt)
         return hess
 
-    def gpu_predict ( self, testing, do_unc = True ):# self, testing, do_unc=True):
-        '''GPU predict function
-        '''
-        ( nn, D ) = testing.shape
-        assert D == self.D
-        expX=np.exp(self.theta)
-        
-        a =_gpu_predict.predict(self.D,
-            expX,
-            self.inputs,
-            self.invQt,
-            self.invQ,
-            testing)
-        print(testing)
-        print(a)
-
-        
-        # for passing the test (temp)
-        mu=0
-        var=0
-        deriv=0
-        if do_unc:
-            return mu, var, deriv
-        else:
-            return mu, deriv
-
-
-        
 
 
         

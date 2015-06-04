@@ -24,25 +24,25 @@ void testPredict(const real *expX, const real *inputs, const real *invQt, const 
 
     begin1 = clock();
 
-    for( i = 0; i < M * M; ++i )
+    /*for( i = 0; i < M * M; ++i )
         invQ_T[i] = invQ[i];
     for( i = 0; i < N * D; ++i )
         inputs_T[i] = inputs[i];
     for( i = 0; i < N * D; ++i )
         testing_T[i] = testing[i];
-
+*/
 
 
     
-    computeTranspose( invQ_T, M, M );
-    computeTranspose( inputs_T, D, M );
-    computeTranspose( testing_T, D, N );
+    invQ_T = computeTranspose( invQ, M, M );
+    inputs_T = computeTranspose( inputs, D, M );
+    testing_T = computeTranspose( testing, D, N );
 
     begin2 = clock();
     predict( expX, inputs_T, invQt, invQ_T, testing_T, gpu_mu, gpu_var, gpu_deriv, N, M, D, D+2);
     end2 = clock();
 
-    computeTranspose( gpu_deriv, N, D);
+    gpu_deriv = computeTranspose( gpu_deriv, N, D);
     
     end1 = clock();
 
