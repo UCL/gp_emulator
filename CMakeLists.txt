@@ -5,5 +5,9 @@ include(build/external/LookUp-GreatCMakeCookOff.cmake)
 subdirs(gp_emulator/gpu)
 set(LIBRARY_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/build/lib/gp_emulator)
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/tests)
-message("export PYTHONPATH=${LIBRARY_OUTPUT_PATH}")
+string(ASCII 27 Esc)
+
+set(ColourReset "${Esc}[m")
+set(Red  "${Esc}[1;31m")
+message("${Red}Type this line or put it in ~/.bashrc or ~/.bash_profile:\nexport PYTHONPATH=$PYTHONPATH:${LIBRARY_OUTPUT_PATH} ${ColourReset}")
 
