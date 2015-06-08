@@ -4,9 +4,9 @@ from gp_emulator import MultivariateEmulator, GaussianProcess
 
 
 
-#d = np.loadtxt("test_00100.txt", delimiter=",")
-d = np.loadtxt("data/validation_set_001000.txt",delimiter=",")
-gp = MultivariateEmulator(dump="data/prosail_30_0_30_0.npz")
+#d = np.loadtxt("../data/test_00100.txt", delimiter=",")
+d = np.loadtxt("../data/validation_set_001000.txt",delimiter=",")
+gp = MultivariateEmulator(dump="../data/prosail_30_0_30_0.npz")
 
 
 wv = np.arange (400, 2501)
@@ -16,7 +16,6 @@ wv = np.arange (400, 2501)
 #    plt.plot ( wv, d[isample, 10:], '--', lw=2)
 
 
-r = gp.predict(d[0,:10],is_gpu=True)[0]
 
 
 
@@ -32,26 +31,30 @@ def perband_emulators ( emulators, band_pass ):
     for i in xrange( n_bands ):
         gp = GaussianProcess ( emulators.y_train[:]*1, \
                 x_train_pband[i,:] )
+        print 'p1', (emulators.y_train[:]*1).shape, 'p2', x_train_pband[i,:].shape
         gp.learn_hyperparameters ( n_tries=5 )
         emus.append ( gp )
     return emus
 
 
 
-#new_output = d[:,10:][:,452:486].mean(axis=1)
-#band_pass = np.zeros( (1,2101), dtype=np.bool)
-#band_pass[:, 442:476] = 1
-#gp_single = perband_emulators ( gp, band_pass )
+new_output = d[:,10:][:,452:486].mean(axis=1)
+band_pass = np.zeros( (1,2101), dtype=np.bool)
+band_pass[:, 442:476] = 1
+gp_single = perband_emulators ( gp, band_pass )
 
 
-#print isinstance ( gp_single[0], GaussianProcess)
-#X = d[:, :10]
-#r = gp_single[0].predict ( X )[0]
-
-#gp_single[0].gpu_predict ( X )
-#print 'predict finish'
+print isinstance ( gp_single[0], GaussianProcess)
+X = d[:, :10]
+gpur = gp_single[0].predict ( X ,is_gpu=True)[0]
+cpur = gp_single[0].predict ( X, is_gpu=False)[0]
+print gpur - cpur
+print 'predict finish'
 #plt.plot ( new_output, r,'o')
 #plt.plot([0, 0.6], [0, 0.6], 'k--')
 
-
+#plt.show()
 #%timeit r = gp_single[0].predict ( X )[0]
+
+
+
