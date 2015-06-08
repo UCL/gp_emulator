@@ -15,7 +15,7 @@ static real *var_test1;
 static real *mu, *var, *deriv;
 
 static  int M, N, D;
-#define epsilon 1e-2
+#define epsilon 1e-7
 
 real *readTestData(char *file_name, int M, int N, int D, int size);
 
@@ -25,4 +25,3 @@ void testCdist(const real *in1,const real *in2, const real *res, const int in1_n
 void testMatrixExp(const real *mat, const real *res, const real alpha,const real beta,const int size);
 void testCublasgemm(const real *c_mat1, const real *c_mat2, const real *c_res, const int mat1_nrows, const int mat1_ncols, const int mat2_nrows, const int mat2_ncols);
 void testPredict(const real *expX, const real *inputs, const real *invQt, const real *invQ, const real *testing, const real *mu, const real *var, const real *deriv, int M, int N, int D);
-//void predict(const real *c_theta_exp, const real *c_inputs,const real *c_invQt,const real *c_invQ, const real *c_testing,real *c_mu, real *c_var, real *c_deriv,const int N,const int M, const int  D, const int theta_size);

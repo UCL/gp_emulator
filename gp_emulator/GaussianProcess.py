@@ -3,7 +3,7 @@ import warnings
 import numpy as np
 import scipy.spatial.distance as dist
 import random
-import _gpu_predict
+#import _gpu_predict
 
 def k_fold_cross_validation(X, K, randomise = False):
     """
@@ -226,7 +226,7 @@ class GaussianProcess:
 
         ( nn, D ) = testing.shape
         assert D == self.D
-
+        print 'testing=', testing.shape, 'inputs=', self.inputs.shape
         expX = np.exp ( self.theta )
         
         a = dist.cdist ( np.sqrt(expX[:(self.D)])*self.inputs, \
@@ -251,32 +251,60 @@ class GaussianProcess:
 	    return mu, deriv
         
     def gpu_predict ( self, testing, do_unc = True ):# self, testing, do_unc=True):
-        '''GPU predict function
-        '''
+        """
+        GPU predict function
+        """
+        import _gpu_predict
         ( nn, D ) = testing.shape
         assert D == self.D
-        expX=np.exp(self.theta)
+        expX = np.exp ( self.theta )
         
+        #print 'testing', testing, 'inputs', self.inputs, 'invQ', self.invQ, 'invQt',self.invQt
         N=testing.shape[0]
         M=self.inputs.shape[0]
         theta_size=self.theta.size
 
-        mu = np.float32(np.zeros(N))
-        var = np.float32(np.zeros(N))
-        deriv = np.float32(np.zeros((N,D)))
         
+        #mu = np.float32(np.zeros(N))
+        #var = np.float32(np.zeros(N))
+        #deriv = np.float32(np.zeros((N,D)))
+        
+        #_gpu_predict.predict_wrap(
+        #        np.float32(expX),
+        #        np.float32(self.inputs),
+        #        np.float32(self.invQt),
+        #        np.float32(self.invQ),
+        #        np.float32(testing), 
+        #        mu, var, deriv,
+        #        N, M, D, theta_size)
+
+        mu = np.zeros(N)
+        var = np.zeros(N)
+        deriv = np.zeros((N,D))
+
         _gpu_predict.predict_wrap(
-                np.float32(expX),
-                np.float32(self.inputs),
-                np.float32(self.invQt),
-                np.float32(self.invQ),
-                np.float32(testing), 
+                expX,
+                self.inputs,
+                self.invQt,
+                self.invQ,
+                testing,
                 mu, var, deriv,
                 N, M, D, theta_size)
+
                
-        
         # for passing the test (temp)
         return mu, var, deriv
+
+    def predict(self, testing, do_unc = True, is_gpu = False):
+        ( nn, D ) = testing.shape
+        #print 'testing', testing, 'inputs', self.inputs, 'invQ', self.invQ#, 'invQt',self.invQt.shape
+        #print testing.shape, self.inputs.shape, self.theta.size
+        if is_gpu == True:
+            print 'GPU'
+            return self.gpu_predict(testing, do_unc)
+        else:
+            print 'CPU'
+            return self.cpu_predict(testing, do_unc)
 
 
         
@@ -318,13 +346,14 @@ if __name__ == "__main__":
     #target2 = data[ :,1]
     #target3 = data[ :,2]
     #input_obs = data[ :, 3: ]
-    wheat = np.loadtxt("data/argentine_wheat.dat")[:, 1:]
+    wheat = np.loadtxt("../data/argentine_wheat.dat")[:, 1:]
     yields = wheat[:,0]
     mu = yields.mean()
     sigma = yields.std()
     yields = (yields - mu ) / sigma
     wheat [:, 0] = yields
     rmse = []
+    print wheat.shape
     for ( train,validate) in k_fold_cross_validation ( wheat, 5, randomise=True):
         train = np.array ( train )
         validate = np.array ( validate )
@@ -332,6 +361,7 @@ if __name__ == "__main__":
         inputs_t = train [ :, 1:]
         yields_v = validate [ :,  0]
         inputs_v = validate [ :, 1:]
+        #print inputs_t.shape, yields_t.shape, inputs_v.shape
         gp = GaussianProcess ( inputs_t, yields_t )
         theta_min= gp.learn_hyperparameters (n_tries=2)
         pred_mu, pred_var, par_dev = gp.predict ( inputs_v )
@@ -357,5 +387,6 @@ if __name__ == "__main__":
     ######plt.plot ( input_obs, target1, 'gs' )
     ######plt.title("theta: %s" % theta )
     ######plt.show()
+
 
 

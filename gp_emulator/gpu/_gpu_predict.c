@@ -102,7 +102,7 @@ real **pymatrix_to_Carrayptrs(PyArrayObject *arrayin)  {
 PyObject *predict_wrap ( PyObject *self, PyObject *args )
 {
     int N,M,D,theta_size;
-    
+    printf("sfadsfadfasdfadsfadsf\n");    
     PyArrayObject *py_theta_exp, *py_inputs, *py_invQt, *py_invQ, *py_testing;
     PyArrayObject *py_mu, *py_var, *py_deriv;
     real *c_theta_exp;
@@ -136,13 +136,18 @@ PyObject *predict_wrap ( PyObject *self, PyObject *args )
     c_inputs_T = computeTranspose( c_inputs, D, M );
     c_testing_T = computeTranspose( c_testing, D, N );
 
-    predict( c_theta_exp, c_inputs, c_invQt, c_invQ, c_testing, 
+    predict( c_theta_exp, c_inputs_T, c_invQt, c_invQ_T, c_testing_T, 
             c_mu, c_var, c_deriv,
             N, M, D, theta_size );
+    int ii;
+    for(ii = 0;ii<10;ii++)
+        printf("%f|",c_mu[ii]);
 
     free(c_invQ_T);
     free(c_inputs_T);
     free(c_testing_T);
+    
+    return Py_BuildValue("");
 
     
 }
