@@ -1,7 +1,7 @@
 cmake_minimum_required (VERSION 2.8)
 
 
-include(build/external/LookUp-GreatCMakeCookOff.cmake)
+include(cmake/LookUp-GreatCMakeCookOff.cmake)
 subdirs(gp_emulator/gpu)
 set(LIBRARY_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/build/lib)
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/tests)
