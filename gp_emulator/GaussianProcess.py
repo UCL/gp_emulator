@@ -222,11 +222,11 @@ class GaussianProcess:
 	do_unc: flag, optional
 		Calculate the uncertainty (if you don't set this flag, it
 		can shave a few us"""
-
+       
 
         ( nn, D ) = testing.shape
         assert D == self.D
-        print 'testing=', testing.shape, 'inputs=', self.inputs.shape
+        print 'testing[python_cpu]=\n', testing
         expX = np.exp ( self.theta )
         
         a = dist.cdist ( np.sqrt(expX[:(self.D)])*self.inputs, \
@@ -259,11 +259,12 @@ class GaussianProcess:
         assert D == self.D
         expX = np.exp ( self.theta )
         
-        #print 'testing', testing, 'inputs', self.inputs, 'invQ', self.invQ, 'invQt',self.invQt
         N=testing.shape[0]
         M=self.inputs.shape[0]
         theta_size=self.theta.size
 
+        print 'testing - python[GPU]\n', testing
+        print 'test shape = ' , testing.shape
         
         #mu = np.float32(np.zeros(N))
         #var = np.float32(np.zeros(N))
@@ -280,25 +281,23 @@ class GaussianProcess:
 
         mu = np.zeros(N)
         var = np.zeros(N)
-        deriv = np.zeros((N,D))
+        deriv = np.zeros(N * D)
 
         _gpu_predict.predict_wrap(
                 expX,
-                self.inputs,
+                self.inputs.reshape(self.inputs.shape[0] * self.inputs.shape[1]),
                 self.invQt,
-                self.invQ,
-                testing,
+                self.invQ.reshape(self.invQ.shape[0] * self.invQ.shape[1]),
+                testing.reshape(testing.shape[0] * testing.shape[1]),
                 mu, var, deriv,
                 N, M, D, theta_size)
 
                
         # for passing the test (temp)
-        return mu, var, deriv
+        return mu, var, deriv.reshape((D,N)).T
 
     def predict(self, testing, do_unc = True, is_gpu = False):
         ( nn, D ) = testing.shape
-        #print 'testing', testing, 'inputs', self.inputs, 'invQ', self.invQ#, 'invQt',self.invQt.shape
-        #print testing.shape, self.inputs.shape, self.theta.size
         if is_gpu == True:
             print 'GPU'
             return self.gpu_predict(testing, do_unc)
