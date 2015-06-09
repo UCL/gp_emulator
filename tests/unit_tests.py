@@ -5,10 +5,18 @@ import os as os
 class GP:
     def __init__ (self, P, N, M):
         self.D = P
+        D=P
         self.theta = np.random.random((P+2))
         self.inputs = np.random.random ((M,P))
         self.invQ = np.random.random((M,M))
         self.invQt = np.random.random ((M))
+
+
+        self.theta= np.fromfile("theta")
+        self.inputs=np.fromfile("inputs").reshape((M, D))
+        self.invQ = np.fromfile("invQ").reshape((M, M))
+        self.invQt = np.fromfile("invQt")
+        
 
     def get_testing_val (self, testing, do_unc = True):
         
@@ -36,19 +44,19 @@ class GP:
         
         
         
-        np.float32(t_expX).tofile("./data/expX.bin")
-        np.float32(t_expXsqrt).tofile("./data/expXsqrt.bin")
-        np.float32(t_inputs).tofile("./data/inputs.bin")
-        np.float32(t_testing).tofile("./data/testing.bin")
-        np.float32(cdist_test_var_1).tofile("./data/cdist_test_var1.bin")
-        np.float32(cdist_test_var_2).tofile("./data/cdist_test_var2.bin")
-        np.float32(cdist_test_var_3).tofile("./data/cdist_a.bin")
-        np.float32(cdist_test_var_4).tofile("./data/cdist_expa.bin")    
+        t_expX.tofile("./data/expX.bin")
+        t_expXsqrt.tofile("./data/expXsqrt.bin")
+        t_inputs.tofile("./data/inputs.bin")
+        t_testing.tofile("./data/testing.bin")
+        cdist_test_var_1.tofile("./data/cdist_test_var1.bin")
+        cdist_test_var_2.tofile("./data/cdist_test_var2.bin")
+        cdist_test_var_3.tofile("./data/cdist_a.bin")
+        cdist_test_var_4.tofile("./data/cdist_expa.bin")    
         
-        np.float32(t_invQ).tofile("./data/invQ.bin")
-        np.float32(mu).tofile("./data/mu.bin")
-        np.float32(var_test_1).tofile("./data/var_test1.bin")
-        np.float32(self.invQt).tofile("./data/invQt.bin")
+        t_invQ.tofile("./data/invQ.bin")
+        mu.tofile("./data/mu.bin")
+        var_test_1.tofile("./data/var_test1.bin")
+        self.invQt.tofile("./data/invQt.bin")
 
 
         ( nn, D ) = testing.shape
@@ -73,8 +81,8 @@ class GP:
             deriv[:, d] = expX[d]*np.dot(c.T, self.invQt)
 #            print deriv[0:10,d]
 
-        np.float32(var).tofile("./data/var.bin")
-        np.float32(deriv).tofile("./data/deriv.bin")
+        var.tofile("./data/var.bin")
+        deriv.tofile("./data/deriv.bin")
 
         if do_unc:
             return mu, var, deriv
@@ -83,10 +91,12 @@ class GP:
 
 
 if __name__ == '__main__':
-    N=1e5
+
+    N=1000
     M=250
     P=10
     testing=np.random.random((N,P))
+    testing=np.fromfile("X").reshape((N,P))
     gp=GP(P,N,M)
     
     gp.get_testing_val(testing)
