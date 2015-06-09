@@ -1,27 +1,37 @@
-
-
 #include "gpu_predict.h"
 
-/* ==== Set up the methods table ====================== */
+/*********************************
+ * Set up the methods table
+ *********************************/
 static PyMethodDef gpuMethods[] = {
     {"predict_wrap", predict_wrap, METH_VARARGS},
     {NULL, NULL}     /* Sentinel - marks the end of this structure */
 };
 
-/* ==== Initialize the C_test functions ====================== */
-//Module name must be _C_arraytest in compile and linked 
+/**********************************
+ * Initialize the C_test functions 
+ * Module name must be _C_arraytest in compile and linked 
+ **********************************/
 void init_gpu_predict()  {
 	(void) Py_InitModule("_gpu_predict", gpuMethods);
 	import_array();  // Must be present for NumPy.  Called first after above line.
 }
 
 
-
+/**********************************
+ * Convert data (vector) from PyArrayObject to real
+ **********************************/
 real *pyvector_to_Carrayptrs(PyArrayObject *arrayin)  {
     return  (real *) arrayin->data;  /* pointer to arrayin data as real */
 }
 
 
+
+/**********************************
+ * getPredictDataFromPython
+ * Assign multiple input python array to C array. 
+ * Both of them are in 1D. 
+ **********************************/
 void getPredictDataFromPython(PyObject *args, real **c_theta_exp, real **c_invQt, real **c_invQ, 
                               real **c_testing, real **c_inputs,
                               real **c_mu, real **c_var, real **c_deriv,
@@ -51,6 +61,14 @@ void getPredictDataFromPython(PyObject *args, real **c_theta_exp, real **c_invQt
     *c_deriv = pyvector_to_Carrayptrs( py_deriv );
 }
 
+
+
+/**********************************
+ * predict_wrap
+ * 1) call getPredictDataFromPython;
+ * 2) transpose 2D arrays (data arranged in 1D) to column major;
+ * 3) calling GPU predict function;
+ **********************************/
 PyObject *predict_wrap ( PyObject *self, PyObject *args )
 {
     int N,M,D,theta_size;
