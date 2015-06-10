@@ -1,9 +1,11 @@
 #include "gpu_predict.h"
+#include<errno.h>
 
 /*********************************
  * Set up the methods table
  *********************************/
-static PyMethodDef gpuMethods[] = {
+static PyMethodDef gpuMethods[] = 
+{
     {"predict_wrap", predict_wrap, METH_VARARGS},
     {NULL, NULL}     /* Sentinel - marks the end of this structure */
 };
@@ -12,16 +14,46 @@ static PyMethodDef gpuMethods[] = {
  * Initialize the C_test functions 
  * Module name must be _C_arraytest in compile and linked 
  **********************************/
-void init_gpu_predict()  {
-	(void) Py_InitModule("_gpu_predict", gpuMethods);
-	import_array();  // Must be present for NumPy.  Called first after above line.
+void init_gpu_predict()  
+{
+    (void) Py_InitModule("_gpu_predict", gpuMethods);
+    import_array();  // Must be present for NumPy.  Called first after above line.
 }
+
+
+/**********************************
+ * Check the dimension and data type 
+ * of input python arrays.
+ **********************************/
+void checkRealVector(PyArrayObject *vec)  
+{
+    if( sizeof( real ) == sizeof( double ) )
+    {
+        if (vec->descr->type_num != NPY_DOUBLE || vec->nd != 1)  
+        {
+            printf( "In checkRealVector: array must be of type Double vector\n");
+            exit(EXIT_FAILURE);
+        }
+       
+    }
+    if( sizeof( real ) == sizeof( float ) ) 
+    {
+        if (vec->descr->type_num != NPY_FLOAT32 || vec->nd != 1)  
+        {
+            printf("In checkRealVector: array must be of type Float32 vector\n");
+            exit(EXIT_FAILURE);
+        }
+    }
+}
+
 
 
 /**********************************
  * Convert data (vector) from PyArrayObject to real
  **********************************/
-real *pyvector_to_Carrayptrs(PyArrayObject *arrayin)  {
+real *pyvector_to_Carrayptrs(PyArrayObject *arrayin)  
+{
+    checkRealVector(arrayin);
     return  (real *) arrayin->data;  /* pointer to arrayin data as real */
 }
 
