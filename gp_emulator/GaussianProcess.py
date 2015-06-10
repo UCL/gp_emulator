@@ -226,7 +226,6 @@ class GaussianProcess:
 
         ( nn, D ) = testing.shape
         assert D == self.D
-        print 'testing[python_cpu]=\n', testing
         expX = np.exp ( self.theta )
         
         a = dist.cdist ( np.sqrt(expX[:(self.D)])*self.inputs, \
@@ -250,10 +249,8 @@ class GaussianProcess:
         else:
 	    return mu, deriv
         
-    def gpu_predict ( self, testing, do_unc = True ):# self, testing, do_unc=True):
-        """
-        GPU predict function
-        """
+        
+    def gpu_predict ( self, testing, prec, threashold):# self, testing, do_unc=True):
         import _gpu_predict
         ( nn, D ) = testing.shape
         assert D == self.D
@@ -263,46 +260,59 @@ class GaussianProcess:
         M=self.inputs.shape[0]
         theta_size=self.theta.size
 
-        print 'testing - python[GPU]\n', testing
-        print 'test shape = ' , testing.shape
-        
-        #mu = np.float32(np.zeros(N))
-        #var = np.float32(np.zeros(N))
-        #deriv = np.float32(np.zeros((N,D)))
-        
-        #_gpu_predict.predict_wrap(
-        #        np.float32(expX),
-        #        np.float32(self.inputs),
-        #        np.float32(self.invQt),
-        #        np.float32(self.invQ),
-        #        np.float32(testing), 
-        #        mu, var, deriv,
-        #        N, M, D, theta_size)
+        nblocks = np.int(np.ceil( np.float32( nn ) / threashold ))
+        block_size = np.int(np.ceil( nn / nblocks ))
+        ind_start = range( np.int(0), np.int(nn), np.int(block_size) )
+        ind_end = np.append( ind_start[1:], nn )
 
-        mu = np.zeros(N)
-        var = np.zeros(N)
-        deriv = np.zeros(N * D)
+        #stretch matrix to vector to feed predict_wrap()
+        inputs = self.inputs.reshape(self.inputs.shape[0] * self.inputs.shape[1])
+        invQt = self.invQt
+        invQ =  self.invQ.reshape(self.invQ.shape[0] * self.invQ.shape[1])
 
-        _gpu_predict.predict_wrap(
-                expX,
-                self.inputs.reshape(self.inputs.shape[0] * self.inputs.shape[1]),
-                self.invQt,
-                self.invQ.reshape(self.invQ.shape[0] * self.invQ.shape[1]),
-                testing.reshape(testing.shape[0] * testing.shape[1]),
-                mu, var, deriv,
-                N, M, D, theta_size)
+        if prec == "float32":
+            inputs = np.float32( inputs )
+            invQt = np.float32( invQt )
+            invQ = np.float32( invQ )
+            expX = np.float32( expX )
 
-               
-        # for passing the test (temp)
-        return mu, var, deriv.reshape((D,N)).T
+        mu = []
+        var = []
+        deriv = np.array([]).reshape( ( 0, D) )
 
-    def predict(self, testing, do_unc = True, is_gpu = False):
+        for block_id in xrange(len(ind_start)):
+           testing_block = testing[ind_start[block_id]:ind_end[block_id],:]   
+           testing_block = testing_block.reshape( testing_block.shape[0] * testing_block.shape[1] )
+
+           N_this_block = np.int(ind_end[block_id] - ind_start[block_id])
+           mu_block = np.zeros( N_this_block )
+           var_block = np.zeros( N_this_block )
+           deriv_block = np.zeros( N_this_block * D )
+
+           if prec == "float32":
+               testing_block = np.float32(testing_block)
+               mu_block = np.float32(mu_block)
+               var_block = np.float32(var_block)
+               deriv_block = np.float32(deriv_block)
+ 
+           _gpu_predict.predict_wrap(
+                   expX, inputs, invQt, invQ, testing_block,
+                   mu_block, var_block, deriv_block,
+                   N_this_block, M, D, theta_size)
+
+           mu = np.append(mu, mu_block)
+           var = np.append(var, var_block)
+           deriv = np.append( deriv, deriv_block.reshape( D, N_this_block ).T, axis = 0)
+
+        return mu, var, deriv
+
+
+
+    def predict(self, testing, do_unc = True, is_gpu = False, prec = 'double', threashold = 2e5):
         ( nn, D ) = testing.shape
         if is_gpu == True:
-            print 'GPU'
-            return self.gpu_predict(testing, do_unc)
+            return self.gpu_predict(testing, prec, threashold = threashold)
         else:
-            print 'CPU'
             return self.cpu_predict(testing, do_unc)
 
 
