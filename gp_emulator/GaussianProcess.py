@@ -3,6 +3,7 @@ import warnings
 import numpy as np
 import scipy.spatial.distance as dist
 import random
+import sys
 #import _gpu_predict
 
 def k_fold_cross_validation(X, K, randomise = False):
@@ -264,6 +265,17 @@ class GaussianProcess:
         block_size = np.int(np.ceil( nn / nblocks ))
         ind_start = range( np.int(0), np.int(nn), np.int(block_size) )
         ind_end = np.append( ind_start[1:], nn )
+        nblocks = len(ind_start)
+        
+        if nblocks > 1:
+            last_two_block_size = ( ind_end[ nblocks - 1 ] - ind_start[ nblocks - 2 ] ) / 2
+            ind_end[ nblocks - 2 ] = ind_start[ nblocks - 2 ] + last_two_block_size
+            ind_start[ nblocks - 1 ] = ind_end[ nblocks - 2 ]
+        print ind_end-ind_start
+        assert np.all(ind_end - ind_start > 500 )
+        assert np.all(ind_end - ind_start < threashold * 1.5 )
+            
+
 
         #stretch matrix to vector to feed predict_wrap()
         inputs = self.inputs.reshape(self.inputs.shape[0] * self.inputs.shape[1])

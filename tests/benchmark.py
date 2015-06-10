@@ -17,8 +17,8 @@ if __name__ == '__main__':
 
     GaussianProcess.set_testing_val = MethodType(set_testing_val, None, GaussianProcess)
 
-    for i in xrange(1):#xrange(1000, 1800000, 5000):
-        N=1e4
+    for i in xrange(np.int(2e3), np.int(1e7), np.int(1e3)):
+        N=i
         M=250
         P=10
 
@@ -36,7 +36,7 @@ if __name__ == '__main__':
     	
         #GPU predict
         start = time.time()
-    	[mu_g, var_g, deriv_g] = gp.predict(testing, is_gpu = True, prec = 'double', threashold = 1e4)
+    	[mu_g, var_g, deriv_g] = gp.predict(testing, is_gpu = True, prec = 'float32', threashold = 1.5e3)
     	end =time.time()
     	gputime = end - start
     	
@@ -45,20 +45,14 @@ if __name__ == '__main__':
 
         # checking results
         try: 
-            e_mu  = max(abs(mu_c - mu_g))
-            e_var = max(abs(var_c - var_g))
-            e_deriv = np.max(abs(deriv_c - deriv_g))
+            e_mu  = max(abs(mu_c - mu_g)) / np.max(abs(mu_c))
+            e_var = max(abs(var_c - var_g)) / np.max(abs(var_c))
+            e_deriv = np.max(abs(deriv_c - deriv_g)) / np.max(abs(deriv_c))
         except ValueError:
             print 'Results have invalid data type or dimension.'
-        if e_mu > 1e-7 or e_var > 1e-7 or e_deriv > 1e-7:
+        if e_mu > 1e-5 or e_var > 1e-5 or e_deriv > 1e-5:
             print 'Failed: ', 'e_mu=', e_mu, 'e_var=', e_var, 'e_deriv=',e_deriv
-            break
+#            break
         else:
             print 'Pass'
 
-
-
-
-
-    	#write testing set
-   
