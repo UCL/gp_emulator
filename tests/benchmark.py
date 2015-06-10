@@ -3,89 +3,62 @@ import numpy as np
 import scipy.spatial.distance as dist
 import _gpu_predict
 import time
+from gp_emulator import GaussianProcess 
+from types import MethodType
 
-class GP:
-    def __init__ (self, P, N, M):
-        self.D = P
-        self.theta = np.random.random((P+2))
-        self.inputs = np.random.random ((M,P))
-        self.invQ = np.random.random((M,M))
-        self.invQt = np.random.random ((M))
-
-    def predict ( self, testing, do_unc=True ):
-        ( nn, D ) = testing.shape
-        assert D == self.D
-
-        expX = np.exp ( self.theta )
-              
-        a = dist.cdist ( np.sqrt(expX[:(self.D)])*self.inputs, np.sqrt(expX[:(self.D)])*testing, 'sqeuclidean')
-        a = expX[self.D]*np.exp(-0.5*a)
-        b = expX[self.D]
-        
-        mu = np.dot( a.T, self.invQt)
-        if do_unc:
-            var = b - np.sum (  a * np.dot(self.invQ,a), axis=0)
-        # Derivative and partial derivatives of the function
-        deriv = np.zeros ( ( nn, self.D ) )
-
-        for d in xrange ( self.D ):
-            aa = self.inputs[:,d].flatten()[None,:] - testing[:,d].flatten()[:,None]
-            
-            c = a*aa.T
-            deriv[:, d] = expX[d]*np.dot(c.T, self.invQt)
-            #print deriv[0:10,d]
-
-        if do_unc:
-            return mu, var, deriv
-        else:
-	    return mu, deriv
-
-
-    def gpu_predict ( self, testing, do_unc = True ):# self, testing, do_unc=True):
-        '''GPU predict function
-        '''
-        ( nn, D ) = testing.shape
-        assert D == self.D
-        expX=np.exp(self.theta)
-
-        N=testing.shape[0]
-        M=self.inputs.shape[0]
-        theta_size=self.theta.size 
-        
-        mu = np.float32(np.zeros(N))
-        var = np.float32(np.zeros(N))
-        deriv = np.float32(np.zeros((N,D)))
-
-        a = _gpu_predict.predict_wrap(
-                np.float32(expX),
-                np.float32(self.inputs),
-                np.float32(self.invQt),
-                np.float32(self.invQ),
-                np.float32(testing),
-                mu, var, deriv,
-                N, M, D, theta_size)
-        if do_unc:
-            return mu, var, deriv
-        else:
-            return mu, deriv
+def set_testing_val (self, P, N, M):
+    self.D = P
+    self.theta = np.random.random((P+2))
+    self.invQ = np.random.random((M,M))
+    self.invQt = np.random.random ((M))
 
 
 if __name__ == '__main__':
+
+    GaussianProcess.set_testing_val = MethodType(set_testing_val, None, GaussianProcess)
+
     for i in xrange(1):#xrange(1000, 1800000, 5000):
-    	N=1e5
-    	M=250
-    	P=10
-    	testing=np.random.random((N,P))
-    	gp=GP(P,N,M)
-    
+        N=1e4
+        M=250
+        P=10
+
+        inputs = np.random.random((M,P))
+        testing=np.random.random((N,P))
+        
+        gp = GaussianProcess(inputs, [])
+        gp.set_testing_val(P, N, M)
+
+        #CPU predict
     	start = time.time()
-    	#gp.predict(testing)
+    	[mu_c, var_c, deriv_c] = gp.predict(testing, is_gpu=False )
     	end = time.time()
     	cputime = end -start
-    	start = time.time()
-    	gp.gpu_predict(testing)
+    	
+        #GPU predict
+        start = time.time()
+    	[mu_g, var_g, deriv_g] = gp.predict(testing, is_gpu = True, prec = 'double', threashold = 1e4)
     	end =time.time()
     	gputime = end - start
-    	print N, cputime, gputime, cputime/gputime
+    	
+        print 'Problem_size,', 'CPU time,', 'GPU time,', 'Speedup', 'checking'
+        print N, cputime, gputime, cputime/gputime,
+
+        # checking results
+        try: 
+            e_mu  = max(abs(mu_c - mu_g))
+            e_var = max(abs(var_c - var_g))
+            e_deriv = np.max(abs(deriv_c - deriv_g))
+        except ValueError:
+            print 'Results have invalid data type or dimension.'
+        if e_mu > 1e-7 or e_var > 1e-7 or e_deriv > 1e-7:
+            print 'Failed: ', 'e_mu=', e_mu, 'e_var=', e_var, 'e_deriv=',e_deriv
+            break
+        else:
+            print 'Pass'
+
+
+
+
+
     	#write testing set
    
