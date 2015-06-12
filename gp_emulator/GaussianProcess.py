@@ -271,7 +271,6 @@ class GaussianProcess:
             last_two_block_size = ( ind_end[ nblocks - 1 ] - ind_start[ nblocks - 2 ] ) / 2
             ind_end[ nblocks - 2 ] = ind_start[ nblocks - 2 ] + last_two_block_size
             ind_start[ nblocks - 1 ] = ind_end[ nblocks - 2 ]
-        print ind_end-ind_start
         assert np.all(ind_end - ind_start > 500 )
         assert np.all(ind_end - ind_start < threashold * 1.5 )
             

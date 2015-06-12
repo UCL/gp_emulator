@@ -16,8 +16,10 @@ def set_testing_val (self, P, N, M):
 if __name__ == '__main__':
 
     GaussianProcess.set_testing_val = MethodType(set_testing_val, None, GaussianProcess)
+    print 'Problem_size\tCPU time\tGPU time\tSpeedup\tStatus'
+    print '-----------------------------'
 
-    for i in xrange(np.int(2e3), np.int(1e7), np.int(1e3)):
+    for i in xrange(np.int(1e3), np.int(1e7), np.int(1e3)):
         N=i
         M=250
         P=10
@@ -36,13 +38,13 @@ if __name__ == '__main__':
     	
         #GPU predict
         start = time.time()
-    	[mu_g, var_g, deriv_g] = gp.predict(testing, is_gpu = True, prec = 'float32', threashold = 1.5e3)
+    	[mu_g, var_g, deriv_g] = gp.predict(testing, is_gpu = True, prec = 'float32', threashold = 1e3)
     	end =time.time()
     	gputime = end - start
-    	
-        print 'Problem_size,', 'CPU time,', 'GPU time,', 'Speedup', 'checking'
-        print N, cputime, gputime, cputime/gputime,
+        print "%d\t%.2fs\t%.2fs\t%.2fx\t" % (N, cputime, gputime, cputime/gputime),
 
+    
+    
         # checking results
         try: 
             e_mu  = max(abs(mu_c - mu_g)) / np.max(abs(mu_c))
