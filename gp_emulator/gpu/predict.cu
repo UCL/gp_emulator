@@ -6,21 +6,7 @@
  *********************************************/
 #include "gpu_predict.h"
 #include <stdlib.h>
-#define IDX2D(i,j,ld) (((j)*(ld))+(i))//column major
 #define debug 
-
-/*********************************************//** 
- * vector matrix elementwise multiplication
- * res_{ix,iy} = A_{ix,iy} * v_{iy}
- *********************************************/
-__global__ 
-void gpu_vectorTimesMatrix(const real *A, const real * v, real *res, int A_ld)
-{
-    int ix, iy;
-    ix = blockIdx.x * blockDim.x + threadIdx.x;
-    iy = blockIdx.y * blockDim.y + threadIdx.y;
-    res[IDX2D(ix, iy, A_ld)] = A[IDX2D(ix, iy, A_ld)] * v[iy];
-}
 
 
 /*********************************************//** 
@@ -155,7 +141,6 @@ extern "C"{
 void predict(const real *c_theta_exp, const real *c_inputs,const real *c_invQt,const real *c_invQ, const real *c_testing,  
         real *c_mu, real *c_var, real *c_deriv,const int N,const int M, const int  D, const int theta_size)
 {
-    //printf("start Gaussian process prediction: (N=%d,nn=%d,D=%d,theta_size=%d)\n",N,M,D,theta_size);   
     int i,j;
     cublasStatus_t stat;
     cublasHandle_t handle;
@@ -200,17 +185,14 @@ void predict(const real *c_theta_exp, const real *c_inputs,const real *c_invQt,c
      * a = cidist(sqrt(expX_{,D}) * inputs * sqrt(expX_{,D} * testing)))
      * Notice: a is equivalent to a^T in python due to column major fashion
      ********************************/ 
+    dim3 nthread, nblock;
     real *d_res_temp1, *d_res_temp2;
     cudaMalloc((void **)&d_res_temp1, sizeof(real) * M * D);
     cudaMalloc((void **)&d_res_temp2, sizeof(real) * N * D);
     
 
-    dim3 nthread(1,D);
-    dim3 nblock(M,1);
-    gpu_vectorTimesMatrix<<<nblock, nthread>>>(d_inputs, d_theta_exp_sqrt, d_res_temp1, M);
-    nthread.x=100; nthread.y=D;
-    nblock.x=N/100; nblock.y=1;
-    gpu_vectorTimesMatrix<<<nblock, nthread>>>(d_testing, d_theta_exp_sqrt  , d_res_temp2, N);
+    gpu_vectorTimesMatrix(d_inputs, d_theta_exp_sqrt, d_res_temp1, M, D);
+    gpu_vectorTimesMatrix(d_testing, d_theta_exp_sqrt, d_res_temp2, N, D);
     gpu_init_array<<<ceil(float(N)*float(M)/1000/float(CUDA_BLOCK)),1000>>>(d_a, 0, N * M);
 
     nthread.x=200;   nthread.y=5;    nthread.z=1;

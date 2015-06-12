@@ -11,7 +11,7 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
-#define DOUBLE__PRECISION
+//#define DOUBLE__PRECISION
 #define CUDA_BLOCK 2
  
 #ifdef DOUBLE__PRECISION
@@ -20,6 +20,7 @@
   #define real float
 #endif 
 
+#define IDX2D(i,j,ld) (((j)*(ld))+(i))//column major
 
 
 #ifdef DOUBLE__PRECISION
@@ -54,12 +55,12 @@ extern "C"{
 #endif
 void predict(const real *c_theta_exp,const  real *c_inputs,const real *c_invQt, const real *c_invQ, const real *c_testing, real *c_mu, real *c_var, real *c_deriv, const int N, const int M, const int  D, const int theta_size);
 real *computeTranspose(const real *matrix, const  int size_in, const  int size_out);
+void gpu_vectorTimesMatrix(const real *A, const real *v, real *res, int nrows, int ncols);
 #ifdef __cplusplus
 }
 #endif
 
 __global__ void gpu_cdist(const real *input1, const real *input2, real *output, int In1_ld, int In2_ld, int Out_ld);
-__global__ void gpu_vectorTimesMatrix(const real *A, const real * v, real *res, int A_ld);
 __global__ void gpu_matrixExp(real *matrix, real alpha, real beta);
 
 
