@@ -267,16 +267,18 @@ class GaussianProcess:
         ind_end = np.append( ind_start[1:], nn )
         nblocks = len(ind_start)
         
+        # the last two block should have equal size
         if nblocks > 1:
             last_two_block_size = ( ind_end[ nblocks - 1 ] - ind_start[ nblocks - 2 ] ) / 2
             ind_end[ nblocks - 2 ] = ind_start[ nblocks - 2 ] + last_two_block_size
             ind_start[ nblocks - 1 ] = ind_end[ nblocks - 2 ]
+        
         assert np.all(ind_end - ind_start > 500 )
         assert np.all(ind_end - ind_start < threashold * 1.5 )
             
 
 
-        #stretch matrix to vector to feed predict_wrap()
+        #stretch the matrices to vector to feed _predict_wrap()
         inputs = self.inputs.reshape(self.inputs.shape[0] * self.inputs.shape[1])
         invQt = self.invQt
         invQ =  self.invQ.reshape(self.invQ.shape[0] * self.invQ.shape[1])
