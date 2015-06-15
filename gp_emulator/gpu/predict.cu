@@ -10,41 +10,7 @@
 
 
 /*********************************************//** 
- * Squared Euclidiean distance function: 
- * - Equivalent to scipy cdist() function
- * - In1_ld and In2_ld, are leading dimention of the input1 and input2, 
- *   in our case it should be always the column. 
- *********************************************/
-__global__
-void gpu_cdist(const real *input1, const real *input2, real *output, int In1_ld, int In2_ld, int Out_ld)
-{
-    int ix, iy, iz;
-    ix = blockIdx.x * blockDim.x + threadIdx.x;//N
-    iy = blockIdx.y * blockDim.y + threadIdx.y;//M
-    iz = blockIdx.z * blockDim.z + threadIdx.z;
-    output[IDX2D(ix, iy, Out_ld)] += pow(input1[IDX2D(iy, iz, In1_ld)] - input2[IDX2D(ix, iz, In2_ld)],2);
-}
-
-/*********************************************//** 
- * initialise array with init_val assigned 
- *********************************************/
-__global__
-void gpu_init_array(real *vec, const real init_val, const int size)
-{
-    int i, index;
-    int ix = blockIdx.x * blockDim.x + threadIdx.x;
-    for( i = 0; i < CUDA_BLOCK; ++i )
-    {
-        index = ix * CUDA_BLOCK + i;
-        if( index < size)
-        {
-            vec[index] = init_val;
-        }
-    }
-}
-
-/*********************************************//** 
- * Do following operation:
+ * Do the following operation:
  * - matrix_{i} = beta * e^{alpha * matrix_{i}}
  *********************************************/
 __global__
@@ -105,9 +71,9 @@ real* gpu_rowSum(const real *A, const int A_nrows,const int A_ncols)
     
     cudaMalloc((void **)&vec_one, sizeof(real) * A_ncols );
     cudaMalloc((void **)&d_var, sizeof(real) * A_ncols);
-    
-    gpu_init_array<<< ceil(float(A_ncols)/512/float(CUDA_BLOCK)), 512 >>>(vec_one, 1, A_ncols);
-    gpu_init_array<<< ceil(float(A_ncols)/512/float(CUDA_BLOCK)), 512 >>>(d_var, 0, A_ncols);
+   
+    gpu_init_array(vec_one, 1.0, A_ncols);
+    gpu_init_array(d_var, 0.0, A_ncols);
 
     cublasCheckErrors(CUBLAS_GEMV(handle, CUBLAS_OP_T, A_nrows, A_ncols, &alpha, A, A_nrows, vec_one, 1, &beta, d_var, 1));
     
@@ -157,8 +123,6 @@ void predict(const real *c_theta_exp, const real *c_inputs,const real *c_invQt,c
 
     //define device vector and matrices
     real *d_inputs, *d_theta_exp, *d_theta_exp_sqrt, *d_invQt, *d_invQ, *d_testing;
-    real *d_a;
-
 
     //allocate and copy vector on device 
     cudaMalloc( (void **)&d_theta_exp, sizeof(real) * theta_size );
@@ -176,8 +140,6 @@ void predict(const real *c_theta_exp, const real *c_inputs,const real *c_invQt,c
     cublasCheckErrors(cublasSetMatrix( M, M, sizeof(real), c_invQ, M, d_invQ, M ));
     cublasCheckErrors(cublasSetMatrix( N, D, sizeof(real), c_testing, N, d_testing, N));
     
-    //allocate memory to results matrices
-    cudaMalloc((void **)&d_a, sizeof(real) * M * N);
 
         
     /*********************************
@@ -186,18 +148,16 @@ void predict(const real *c_theta_exp, const real *c_inputs,const real *c_invQt,c
      * Notice: a is equivalent to a^T in python due to column major fashion
      ********************************/ 
     dim3 nthread, nblock;
-    real *d_res_temp1, *d_res_temp2;
+    real *d_res_temp1, *d_res_temp2, *d_a;
     cudaMalloc((void **)&d_res_temp1, sizeof(real) * M * D);
     cudaMalloc((void **)&d_res_temp2, sizeof(real) * N * D);
-    
+    cudaMalloc((void **)&d_a, sizeof(real) * M * N);
+   
 
     gpu_vectorTimesMatrix(d_inputs, d_theta_exp_sqrt, d_res_temp1, M, D);
     gpu_vectorTimesMatrix(d_testing, d_theta_exp_sqrt, d_res_temp2, N, D);
-    gpu_init_array<<<ceil(float(N)*float(M)/1000/float(CUDA_BLOCK)),1000>>>(d_a, 0, N * M);
-
-    nthread.x=200;   nthread.y=5;    nthread.z=1;
-    nblock.x=N/200;  nblock.y=M/5;     nblock.z=D;
-    gpu_cdist<<<nblock,nthread>>>(d_res_temp1, d_res_temp2, d_a, M, N, N);
+    gpu_init_array( d_a, 0.0, N * M );
+    gpu_cdist(d_res_temp1, d_res_temp2, d_a, M, D, N, D);
 
     
     nthread.x=1000; nthread.y=1; nthread.z=1;

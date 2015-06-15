@@ -7,9 +7,19 @@ find_path(CUNIT_INCLUDE_DIR NAMES CUnit/CUnit.h)
 
 include_directories(${CUNIT_INCLUDE_DIR})
 
-cuda_add_executable(gpu_predict_test test1.cu readTestData.cu     testCdist.cu        testCublasgemm.cu   
-                    testMatrixExp.cu    testPredict.cu      testVecTimesMat.cu
-                    ../predict.cu ../computeTranspose.cu ../kernel_vectorTimesMatrix.cu)
+cuda_add_executable(gpu_predict_test test1.cu 
+                    readTestData.cu     
+                    testCdist.cu        
+                    testCublasgemm.cu   
+                    testMatrixExp.cu    
+                    testPredict.cu      
+                    testVecTimesMat.cu
+                    testInitArray.cu
+                    ../predict.cu 
+                    ../computeTranspose.cu 
+                    ../kernel_vectorTimesMatrix.cu
+                    ../kernel_init_array.cu
+                    ../kernel_cdist.cu)
 cuda_add_cublas_to_target(gpu_predict_test)
 target_link_libraries(gpu_predict_test ${CUNIT_LIBRARY})
 

@@ -20,9 +20,9 @@ void testMatrixExp(const real *mat, const real *res, const real alpha,const real
 
     cudaMemcpy( gpu_res, d_mat, sizeof(real) * size, cudaMemcpyDeviceToHost);
     
-    for( i = 0; i < 100; i++ )
+    for( i = 0; i < size; i++ )
     {
-        if(abs( gpu_res[i] - res[i] ) > 10)
+        if(abs( gpu_res[i] - res[i] ) / res[i] > epsilon)
             error++;
     }
     

@@ -23,16 +23,6 @@ void testPredict(const real *expX, const real *inputs, const real *invQt, const 
     
 
     begin1 = clock();
-
-    /*for( i = 0; i < M * M; ++i )
-        invQ_T[i] = invQ[i];
-    for( i = 0; i < N * D; ++i )
-        inputs_T[i] = inputs[i];
-    for( i = 0; i < N * D; ++i )
-        testing_T[i] = testing[i];
-*/
-
-
     
     invQ_T = computeTranspose( invQ, M, M );
     inputs_T = computeTranspose( inputs, D, M );
@@ -51,36 +41,50 @@ void testPredict(const real *expX, const real *inputs, const real *invQt, const 
     printf("      -total time including matrix transposing = %f (sec)\n", (double)(end1-begin1)/CLOCKS_PER_SEC);
     printf("      -pure predict function = %f (sec)\n", (double)(end2-begin2)/CLOCKS_PER_SEC);
     
-    int e_deriv = 0;
+    int error_num;
+    real error;
+    error_num = 0;
+    error = 0.0;
     for( i = 0; i < N * D; ++i )
     {
-        if(abs( gpu_deriv[i] - deriv[i] ) > epsilon )
-            e_deriv++;
-    }
-    CU_ASSERT(e_deriv == 0);
-    if( e_deriv != 0 )
-        printf( "  ERROR: deriv [%d/%d]   ", e_deriv, N * D );
+        if(abs( gpu_deriv[i] - deriv[i] ) / abs( deriv[i] ) > epsilon )
+        {
+            error_num++;
+            error += abs( gpu_deriv[i] - deriv[i] ) / abs( deriv[i] );
+        }
 
-    int e_mu = 0;
+    }
+    CU_ASSERT(error == 0);
+    if( error != 0 )
+        printf( "  error_deriv =  %f [%d/%d]   ", error/error_num, error_num,  N * D );
+
+    error_num = 0;
+    error = 0.0;
     for( i = 0; i < N; ++i )
     {
-        if( abs( gpu_mu[i] - mu[i] ) > epsilon )
-        e_mu++;
+        if( abs( gpu_mu[i] - mu[i] ) / abs( mu[i] )> epsilon )
+        {
+            error_num++;
+            error += abs( gpu_mu[i] - mu[i] ) / abs( mu[i] );
+        }
     }
-    CU_ASSERT(e_mu == 0);
-    if( e_mu != 0 )
-        printf( "  ERROR: mu [%d/%d]   ", e_mu, N );
+    CU_ASSERT(error == 0);
+    if( error != 0 )
+        printf( "    error_mu = %f [%d/%d]   ", error/error_num, error_num, N );
 
-
-    int e_var = 0;
+    error_num = 0;
+    error = 0.0;
     for( i = 0; i < N; ++i)
     {
-        if( abs( gpu_var[i] - var[i] ) > epsilon )
-            e_var++;
+        if( abs( gpu_var[i] - var[i] ) / abs( var[i] ) > epsilon )
+        {
+            error_num++;
+            error += abs( gpu_var[i] - var[i] ) / abs( var[i] );
+        }
     }
-    CU_ASSERT( e_var == 0 );
-    if( e_var != 0 )
-        printf( "  ERROR: var [%d/%d]   ", e_var, N );
+    CU_ASSERT( error == 0 );
+    if( error != 0 )
+        printf( "  error_var: %f [%d/%d]   ",error/error_num, error_num, N );
 
 
    
