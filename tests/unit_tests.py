@@ -11,13 +11,6 @@ class GP:
         self.invQ = np.random.random((M,M))
         self.invQt = np.random.random ((M))
 
-
-        self.theta= np.fromfile("theta")
-        self.inputs=np.fromfile("inputs").reshape((M, D))
-        self.invQ = np.fromfile("invQ").reshape((M, M))
-        self.invQt = np.fromfile("invQt")
-        
-
     def get_testing_val (self, testing, do_unc = True):
         
         ( nn, D ) = testing.shape
@@ -38,8 +31,6 @@ class GP:
         cdist_test_var_4 = expX[self.D]*np.exp(-0.5*cdist_test_var_3)
 
         mu = np.dot( cdist_test_var_4.T, self.invQt)
-
-
         var_test_1 = np.dot(self.invQ, cdist_test_var_4)
         
         
@@ -91,15 +82,15 @@ class GP:
 
 
 if __name__ == '__main__':
-
-    N=1000
-    M=250
-    P=10
-    testing=np.random.random((N,P))
-    testing=np.fromfile("X").reshape((N,P))
-    gp=GP(P,N,M)
-    
-    gp.get_testing_val(testing)
-    command = "./gpu_predict_test  %d %d %d" % (M, N, P)
-    os.system(command)
+    for i in xrange(1000, 10000, 1000):
+        N=i
+        M=250
+        P=10
+        
+        testing=np.random.random((N,P))
+        gp=GP(P,N,M)
+        
+        gp.get_testing_val(testing)
+        command = "./gpu_predict_test  %d %d %d" % (M, N, P)
+        os.system(command)
    
