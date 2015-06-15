@@ -20,7 +20,11 @@ cuda_add_executable(gpu_predict_test test1.cu
                     ../kernel_vectorTimesMatrix.cu
                     ../kernel_init_array.cu
                     ../kernel_cdist.cu
-                    ../kernel_matrixExp.cu)
+                    ../kernel_matrixExp.cu
+                    ../kernel_elementwiseMult.cu
+                    ../kernel_scalarMinusVec.cu
+                    ../kernel_rowSum.cu
+                    ../kernel_crossMinus.cu)
 cuda_add_cublas_to_target(gpu_predict_test)
 target_link_libraries(gpu_predict_test ${CUNIT_LIBRARY})
 

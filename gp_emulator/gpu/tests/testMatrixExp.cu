@@ -8,15 +8,15 @@ void testMatrixExp(const real *mat, const real *res, const real alpha,const real
     real *d_mat;
     real *gpu_res;
 
-    gpu_res = (real *)malloc(sizeof(real) * size);
-    cudaMalloc((void **)&d_mat, sizeof(real) * size);
+    gpu_res = (real *)malloc( sizeof(real) * size );
+    cudaMalloc( (void **)&d_mat, sizeof(real) * size );
 
-    cudaMemcpy(d_mat, mat, sizeof(real) * size, cudaMemcpyHostToDevice);
+    cudaMemcpy( d_mat, mat, sizeof(real) * size, cudaMemcpyHostToDevice );
 //    int nblocks , nthreads;
 //    nthreads=1000; 
 //    nblocks=ceil(float(size) / float(CUDA_BLOCK) / 1000);
     
-    gpu_matrixExp(d_mat, alpha, beta, size);
+    gpu_matrixExp( d_mat, alpha, beta, size );
 
     cudaMemcpy( gpu_res, d_mat, sizeof(real) * size, cudaMemcpyDeviceToHost);
     

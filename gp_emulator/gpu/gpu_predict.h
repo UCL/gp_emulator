@@ -47,9 +47,6 @@ void getPredictDataFromPython(PyObject *args, real **c_theta_exp, real **c_invQt
                               real **c_mu, real **c_var, real **c_deriv,
                               int *N, int *M, int *D, int *theta_size);
 
-
-
-
 #ifdef __cplusplus
 extern "C"{
 #endif
@@ -59,6 +56,10 @@ void gpu_vectorTimesMatrix(const real *A, const real *v, real *res, int nrows, i
 void gpu_init_array(real *vec, const int init_val, const int vec_len);
 void gpu_cdist(const real *input1, const real *input2, real *output, const int nrow1, const int ncol1, const int nrow2, const int ncol2);
 void gpu_matrixExp( real *matrix,const real alpha,const real beta, const int size );
+void gpu_elementwiseMult( const real *v1, real *v2, const int size );
+void gpu_scalarMinusVec( real *matrix, const real scalar, const int size );
+real* gpu_rowSum(const real *A, const int A_nrows,const int A_ncols);
+void gpu_crossMinus(const real *v1, const real *v2, real *mat_res, const int v1_len, const int v2_len);
 #ifdef __cplusplus
 }
 #endif
