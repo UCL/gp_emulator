@@ -58,11 +58,11 @@ real *computeTranspose(const real *matrix, const  int size_in, const  int size_o
 void gpu_vectorTimesMatrix(const real *A, const real *v, real *res, int nrows, int ncols);
 void gpu_init_array(real *vec, const int init_val, const int vec_len);
 void gpu_cdist(const real *input1, const real *input2, real *output, const int nrow1, const int ncol1, const int nrow2, const int ncol2);
+void gpu_matrixExp( real *matrix,const real alpha,const real beta, const int size );
 #ifdef __cplusplus
 }
 #endif
 
-__global__ void gpu_matrixExp(real *matrix, real alpha, real beta);
 
 
 // error check macros

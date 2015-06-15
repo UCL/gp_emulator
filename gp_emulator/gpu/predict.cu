@@ -14,7 +14,7 @@
  * - matrix_{i} = beta * e^{alpha * matrix_{i}}
  *********************************************/
 __global__
-void gpu_matrixExp(real *matrix, real alpha, real beta)
+void gpumatrixExp(real *matrix, real alpha, real beta)
 {
     int i;
     int ix = blockIdx.x * blockDim.x + threadIdx.x;
@@ -152,17 +152,12 @@ void predict(const real *c_theta_exp, const real *c_inputs,const real *c_invQt,c
     cudaMalloc((void **)&d_res_temp1, sizeof(real) * M * D);
     cudaMalloc((void **)&d_res_temp2, sizeof(real) * N * D);
     cudaMalloc((void **)&d_a, sizeof(real) * M * N);
-   
 
     gpu_vectorTimesMatrix(d_inputs, d_theta_exp_sqrt, d_res_temp1, M, D);
     gpu_vectorTimesMatrix(d_testing, d_theta_exp_sqrt, d_res_temp2, N, D);
     gpu_init_array( d_a, 0.0, N * M );
     gpu_cdist(d_res_temp1, d_res_temp2, d_a, M, D, N, D);
-
-    
-    nthread.x=1000; nthread.y=1; nthread.z=1;
-    nblock.x=ceil(float(N) * float(M) / float(CUDA_BLOCK)/1000); nblock.y=1; nblock.z=1;
-    gpu_matrixExp<<<nblock,nthread>>>(d_a, -0.5, c_theta_exp[D]);
+    gpu_matrixExp(d_a, -0.5, c_theta_exp[D], M * N);
 
     cudaFree(d_res_temp1);
     cudaFree(d_res_temp2);
@@ -178,8 +173,7 @@ for(kk =0; kk<10; kk++)
   printf("\n");
 #endif
 
-
-
+    
       
 
     /*********************************
@@ -208,6 +202,10 @@ for(kk =0; kk<10; kk++)
     cublasCheckErrors(CUBLAS_GEAM(handle, CUBLAS_OP_T, CUBLAS_OP_N, M, N, &alpha, d_a, N, &beta, d_a, M, d_a_T, M));
     cudaFree(d_a);
     cudaFree(d_invQ);
+    
+    nthread.x=1000; nthread.y=1; nthread.z=1;
+    nblock.x=ceil(float(N) * float(M) / float(CUDA_BLOCK)/1000); nblock.y=1; nblock.z=1;
+
     gpu_elementwiseMult<<< nblock, nthread >>>(d_a_T, d_temp_dot, M * N);
 
     d_var = gpu_rowSum(d_temp_dot, M, N);
