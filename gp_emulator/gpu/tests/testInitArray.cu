@@ -11,8 +11,8 @@ void testInitArray(void)
  
     for( test = 0; test < 6; ++test )
     {
-        val = pow( 10, test-5);
-        len = pow( 10, test );
+        val = pow( 10.0, test-5);
+        len = pow( 10.0, test );
         gpu_init_array(vec_g, val, len);
         cudaMemcpy(vec_g, vec_c, sizeof(real) * len, cudaMemcpyDeviceToHost);
         
