@@ -4,7 +4,7 @@
 
 void testCdist( const real *in1,const real *in2, const real *res, const int in1_nrows, const int in2_nrows, const int in_ncols )
 {
-    int i, j, k, error;
+    int i, error;
     real *in1_T, *in2_T, *gpu_res;
     real *d_in1, *d_in2, *d_res; 
 

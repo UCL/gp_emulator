@@ -11,7 +11,7 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
-#define DOUBLE__PRECISION
+//#define DOUBLE__PRECISION
 #define CUDA_BLOCK 2
  
 #ifdef DOUBLE__PRECISION

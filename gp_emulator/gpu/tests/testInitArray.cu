@@ -6,8 +6,8 @@ void testInitArray(void)
     real val;
     int len;
     int i, test, error;
-    vec_c = (real *)malloc( sizeof(real) * 1e7 );
-    cudaMalloc( (void **)&vec_g, sizeof(real) * 1e7 );
+    vec_c = (real *)malloc( int(sizeof(real) * 1e7) );
+    cudaMalloc( (void **)&vec_g, int(sizeof(real) * 1e7) );
  
     for( test = 0; test < 6; ++test )
     {

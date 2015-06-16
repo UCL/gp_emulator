@@ -15,7 +15,7 @@ static real *var_test1;
 static real *mu, *var, *deriv;
 
 static  int M, N, D;
-#define epsilon 1e-3
+#define epsilon 1e-5
 
 real *readTestData(char *file_name, int M, int N, int D, int size);
 

@@ -79,7 +79,7 @@ void predict(const real *c_theta_exp, const real *c_inputs,const real *c_invQt,c
     cudaMalloc((void **)&d_mu, sizeof(real) * N);
     real alpha = 1.f;
     real beta = 0.f;
-    cublasCheckErrors(CUBLAS_GEMV(handle, CUBLAS_OP_N, N, M, &alpha, d_a, N, d_invQt, 1, &beta, d_mu, 1));
+    /*cublasCheckErrors(*/CUBLAS_GEMV(handle, CUBLAS_OP_N, N, M, &alpha, d_a, N, d_invQt, 1, &beta, d_mu, 1);//);
     cudaMemcpy(c_mu, d_mu, sizeof(real) * N, cudaMemcpyDeviceToHost);
        
     
