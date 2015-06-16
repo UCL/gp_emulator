@@ -9,8 +9,8 @@
 #define debug
 /*********************************************//**
  * predict function:
- * This is the corresponding CUDA function of
- * GaussianPredict:predict in python code.
+ * CUDA version of the corresponding python code
+ * GaussianPredict::predict
  *********************************************/
 extern "C"{
 void predict(const real *c_theta_exp, const real *c_inputs,const real *c_invQt,const real *c_invQ, const real *c_testing,  
@@ -56,7 +56,6 @@ void predict(const real *c_theta_exp, const real *c_inputs,const real *c_invQt,c
      * a = cidist(sqrt(expX_{,D}) * inputs * sqrt(expX_{,D} * testing)))
      * Notice: a is equivalent to a^T in python due to column major fashion
      ********************************/ 
-    dim3 nthread, nblock;
     real *d_res_temp1, *d_res_temp2, *d_a;
     cudaMalloc((void **)&d_res_temp1, sizeof(real) * M * D);
     cudaMalloc((void **)&d_res_temp2, sizeof(real) * N * D);
@@ -114,10 +113,7 @@ void predict(const real *c_theta_exp, const real *c_inputs,const real *c_invQt,c
     ********************************/
     real *d_deriv;
     cudaMalloc((void **)&d_deriv, sizeof(real) * N );
-    
    
-    dim3 nblocks_getaa(M, N/1000);
-    dim3 nthreads_getaa(1,1000);
     real *d_aa;
     cudaMalloc((void **)&d_aa, sizeof(real) * M * N);
     real *ptr_inputs, *ptr_testing, *ptr_deriv;
