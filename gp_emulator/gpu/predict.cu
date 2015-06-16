@@ -16,11 +16,11 @@ extern "C"{
 void predict(const real *c_theta_exp, const real *c_inputs,const real *c_invQt,const real *c_invQ, const real *c_testing,  
         real *c_mu, real *c_var, real *c_deriv,const int N,const int M, const int  D, const int theta_size)
 {
-    int i,j;
-    cublasStatus_t stat;
+    int i;
+//    cublasStatus_t stat;
     cublasHandle_t handle;
     
-    stat=cublasCreate(&handle);
+    cublasCreate(&handle);
 
     real *c_theta_exp_sqrt;
     c_theta_exp_sqrt = (real *)malloc( sizeof(real) * theta_size );
