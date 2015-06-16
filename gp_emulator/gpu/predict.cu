@@ -6,7 +6,7 @@
  *********************************************/
 #include "gpu_predict.h"
 #include <stdlib.h>
-#define debug 
+#define debug
 /*********************************************//**
  * predict function:
  * This is the corresponding CUDA function of
@@ -70,20 +70,6 @@ void predict(const real *c_theta_exp, const real *c_inputs,const real *c_invQt,c
 
     cudaFree(d_res_temp1);
     cudaFree(d_res_temp2);
-int kk;
-#undef debug
-#ifdef debug
-real *h_a;
-h_a=(real *)malloc(sizeof(real) * M * N);
-cudaMemcpy(h_a, d_a, sizeof(real) * M * N, cudaMemcpyDeviceToHost);
-
-for(kk =0; kk<10; kk++)
-  printf("%f|", h_a[kk]);
-  printf("\n");
-#endif
-
-    
-      
 
     /*********************************
      * compute mu:
@@ -129,10 +115,7 @@ for(kk =0; kk<10; kk++)
     real *d_deriv;
     cudaMalloc((void **)&d_deriv, sizeof(real) * N );
     
-    nthread.x=1000; nthread.y=1; nthread.z=1;
-    nblock.x=ceil(float(N) * float(M) / float(CUDA_BLOCK)/1000); nblock.y=1; nblock.z=1;
-
-
+   
     dim3 nblocks_getaa(M, N/1000);
     dim3 nthreads_getaa(1,1000);
     real *d_aa;
@@ -151,6 +134,7 @@ for(kk =0; kk<10; kk++)
         cublasCheckErrors(CUBLAS_GEMV(handle, CUBLAS_OP_T, M, N, &alpha, d_aa, M, d_invQt, 1, &beta, d_deriv,1));
 
         cudaMemcpy(ptr_deriv, d_deriv, sizeof(real) * N, cudaMemcpyDeviceToHost);
+        ptr_deriv = ptr_deriv + N;
      }
 
      cudaFree(d_mu);

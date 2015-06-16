@@ -19,11 +19,11 @@ void gpu_crossMinus(const real *v1, const real *v2, real *mat_res, const int v1_
 {
     dim3 nthread, nblock;
     if( v2_len < 1024 )
-        nthread.x = v2_len;
+        nthread.y = v2_len;
     else
-        nthread.x = 1024;
+        nthread.y = 1024;
     
-    nthread.y = 1;
+    nthread.x = 1;
     nblock.x = v1_len;
     nblock.y = ceil( float(v2_len) / float(nthread.y) );
 
