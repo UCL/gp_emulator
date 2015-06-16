@@ -18,24 +18,9 @@ void testCublasgemm(const real *c_mat1, const real *c_mat2, const real *c_res, c
 
 
     real *c_mat1_T;
-/*    c_mat1_T = (real *)malloc(sizeof(real)* mat1_ncols * mat1_nrows);
-    c_mat2_T = (real *)malloc(sizeof(real)* mat2_ncols * mat2_nrows);
-
-
-
-    for( i = 0; i < mat1_ncols * mat1_nrows; i++ )
-        c_mat1_T[i] = c_mat1[i];
-
-    for( i = 0; i < mat2_ncols * mat2_nrows; i++ )
-        c_mat2_T[i] = c_mat2[i];
-
-  */  
     
     
    c_mat1_T = computeTranspose(c_mat1, mat1_nrows, mat1_ncols); 
-//   computeTranspose(c_mat2_T, mat2_ncols, mat2_nrows);
-    
-
 
     cudaMemcpy( d_mat1, c_mat1_T, sizeof(real) * mat1_nrows * mat1_ncols, cudaMemcpyHostToDevice);
     cudaMemcpy( d_mat2, c_mat2, sizeof(real) * mat1_nrows * mat2_ncols, cudaMemcpyHostToDevice);
@@ -71,7 +56,6 @@ void testCublasgemm(const real *c_mat1, const real *c_mat2, const real *c_res, c
 
 
     free(c_mat1_T);
-    //free(c_mat2_T);
     cudaFree(d_mat1);
     cudaFree(d_mat2);
     cudaFree(d_res);
