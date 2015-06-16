@@ -1,5 +1,5 @@
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 from gp_emulator import MultivariateEmulator, GaussianProcess
 from types import MethodType
 import scipy.spatial.distance as dist
