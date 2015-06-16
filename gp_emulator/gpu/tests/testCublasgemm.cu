@@ -37,24 +37,9 @@ void testCublasgemm(const real *c_mat1, const real *c_mat2, const real *c_res, c
                 d_res, mat1_ncols ));
 
     cudaMemcpy( c_gpu_res, d_res, sizeof(real) * mat1_nrows *  mat2_ncols, cudaMemcpyDeviceToHost);
-
- 
-
     c_gpu_res = computeTranspose(c_gpu_res, mat1_nrows, mat2_ncols); 
-    int error = 0;
-    for(i = 0; i < mat1_nrows * mat2_ncols; i++)
-    {
-        if( abs( c_gpu_res[i] - c_res[i] ) / c_res[i] > epsilon )
-            error++;
-    }
+    compare_result( c_gpu_res, c_res, mat1_nrows * mat2_ncols, EPSILON_AVG, EPSILON_MAX, "RESULTS");
     
-    if( error != 0 )
-        printf("  ERROR: cublasgemm [%d/%d]   ", error, mat1_nrows*mat2_ncols);
-    CU_ASSERT( error == 0);
-
-
-
-
     free(c_mat1_T);
     cudaFree(d_mat1);
     cudaFree(d_mat2);

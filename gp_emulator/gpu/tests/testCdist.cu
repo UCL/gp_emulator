@@ -30,22 +30,13 @@ void testCdist( const real *in1,const real *in2, const real *res, const int in1_
     gpu_cdist(d_in1, d_in2, d_res, in1_nrows, in_ncols, in2_nrows, in_ncols);
     cudaMemcpy(gpu_res, d_res, sizeof(real) * in2_nrows * in1_nrows, cudaMemcpyDeviceToHost);
     
-    error = 0;
-    for( i = 0; i < in1_nrows * in2_nrows; i++ )
-    {
-         if( abs( res[i] - gpu_res[i] ) / res[i] > epsilon )
-             error++;
-    }
-    if( error != 0)
-        printf( "  cdist: [%d/%d]\n", error, in1_nrows*in2_nrows );
- 
-   CU_ASSERT( error == 0 );
-
-   free(in1_T);
-   free(in2_T);
-   free(gpu_res);
+    compare_result(gpu_res, res, in1_nrows * in2_nrows, EPSILON_AVG, EPSILON_MAX, "RESULT");
+    
+    free(in1_T);
+    free(in2_T);
+    free(gpu_res);
    
-   cudaFree(d_in1);
-   cudaFree(d_in2);
-   cudaFree(d_res);
+    cudaFree(d_in1);
+    cudaFree(d_in2);
+    cudaFree(d_res);
 }

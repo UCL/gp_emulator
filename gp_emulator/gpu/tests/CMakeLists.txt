@@ -7,8 +7,9 @@ find_path(CUNIT_INCLUDE_DIR NAMES CUnit/CUnit.h)
 
 include_directories(${CUNIT_INCLUDE_DIR})
 
-cuda_add_executable(gpu_predict_test test1.cu 
+cuda_add_executable(gpu_predict_test unit_test.cu 
                     readTestData.cu     
+                    compare_result.cu
                     testCdist.cu        
                     testCublasgemm.cu   
                     testMatrixExp.cu    
