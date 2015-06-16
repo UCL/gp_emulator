@@ -38,7 +38,7 @@ if __name__ == '__main__':
     	
         #GPU predict
         start = time.time()
-    	[mu_g, var_g, deriv_g] = gp.predict(testing, is_gpu = True, prec = 'float64', threashold = 2e5)
+    	[mu_g, var_g, deriv_g] = gp.predict(testing, is_gpu = True, prec = 'float32', threashold = 2e5)
     	end =time.time()
     	gputime = end - start
         print "%d\t%.2fs\t%.2fs\t%.2fx\t" % (N, cputime, gputime, cputime/gputime),
@@ -52,9 +52,10 @@ if __name__ == '__main__':
             e_deriv = np.max(abs(deriv_c - deriv_g)) / np.max(abs(deriv_c))
         except ValueError:
             print 'Results have invalid data type or dimension.'
-        #if e_mu > 1e-5 or e_var > 1e-5 or e_deriv > 1e-5:
-        print '', 'e_mu=', e_mu, 'e_var=', e_var, 'e_deriv=',e_deriv
-#            break
-        #else:
-        #    print 'Pass'
+        if e_mu > 1e-5 or e_var > 1e-5 or e_deriv > 1e-5:
+            print 'FAILED\t',
+        else:
+            print 'Pass\t',
+        print 'e_mu=%.2g\te_var=%.2g\te_deriv=%.2g\t'%(e_mu, e_var, e_deriv)
+
 
