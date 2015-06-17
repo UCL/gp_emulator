@@ -25,7 +25,7 @@ class GP:
         t_testing = testing
         t_invQ = self.invQ
 
-        cdist_test_var_1= t_expXsqrt * t_inputs #np.sqrt(expX[:(self.D)])*self.inputs
+        cdist_test_var_1= t_expXsqrt * t_inputs 
         cdist_test_var_2 = np.sqrt(expX[:(self.D)])*testing
         cdist_test_var_3 = dist.cdist ( np.sqrt(expX[:(self.D)])*self.inputs, np.sqrt(expX[:(self.D)])*testing, 'sqeuclidean')
         cdist_test_var_4 = expX[self.D]*np.exp(-0.5*cdist_test_var_3)
@@ -67,11 +67,8 @@ class GP:
 
         for d in xrange ( self.D ):
             aa = self.inputs[:,d].flatten()[None,:] - testing[:,d].flatten()[:,None]
-            
             c = a*aa.T
             deriv[:, d] = expX[d]*np.dot(c.T, self.invQt)
-#            print deriv[0:10,d]
-
         var.tofile("./data/var.bin")
         deriv.tofile("./data/deriv.bin")
 
@@ -82,8 +79,8 @@ class GP:
 
 
 if __name__ == '__main__':
-    for i in xrange(10000, 1000000, 10000):
-        N=i
+    for size in xrange(10000, 1000000, 10000):
+        N=size
         M=250
         P=10
         
