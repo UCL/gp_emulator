@@ -18,7 +18,7 @@ Requirements:
     * CUDA 5.0 or later
     * CUnit
 
-Install without GPU:
+Install without GPU predict:
 ---------
 ```bash
 cd gp_emulator
@@ -28,17 +28,19 @@ python setup.py install
 Install with GPU predict:
 ---------
 1. install python modules
-```bash
+    ```bash
 python setup.py install
 ```
 2. compile CUDA modules
-```bash
+    ```bash
 cd build
 cmake ..
 make 
 ```
-3. export the python path
-
+3. export the python path following the cmake instruction, e.g.
+    ```bash
+    export PYTHONPATH=$PYTHONPATH:/home/sinan/gp-emulator/emulator/build/lib```
+    
 Tests (only with predict):
 ----------
 1. Unit testing ([unit_tests.py](https://github.com/UCL/gp_emulator/blob/master/tests/unit_tests.py)):
