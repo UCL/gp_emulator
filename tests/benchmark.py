@@ -1,4 +1,5 @@
 #!/usr/local/bin/python
+
 import numpy as np
 import scipy.spatial.distance as dist
 import _gpu_predict
@@ -19,10 +20,10 @@ if __name__ == '__main__':
     print 'Problem_size\tCPU time\tGPU time\tSpeedup\tStatus'
     print '-----------------------------'
 
-    for i in xrange(np.int(1e4), np.int(1e7), np.int(1e4)):
-        N=i
-        M=250
-        P=10
+    for size in xrange(np.int(1e4), np.int(1e7), np.int(1e4)):
+        N = size
+        M = 250
+        P = 10
 
         inputs = np.random.random((M,P))
         testing=np.random.random((N,P))
@@ -38,7 +39,7 @@ if __name__ == '__main__':
     	
         #GPU predict
         start = time.time()
-    	[mu_g, var_g, deriv_g] = gp.predict(testing, is_gpu = True, prec = 'float32', threashold = 2e5)
+    	[mu_g, var_g, deriv_g] = gp.predict(testing, is_gpu = True, prec = 'float64', threashold = 2e5)
     	end =time.time()
     	gputime = end - start
         print "%d\t%.2fs\t%.2fs\t%.2fx\t" % (N, cputime, gputime, cputime/gputime),
