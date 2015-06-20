@@ -4,7 +4,7 @@ import numpy as np
 import scipy.spatial.distance as dist
 import random
 import sys
-#import _gpu_predict
+import _gpu_predict
 
 def k_fold_cross_validation(X, K, randomise = False):
     """
@@ -237,7 +237,7 @@ class GaussianProcess:
         mu = np.dot( a.T, self.invQt)
 
         if do_unc:
-	       var = b - np.sum (  a * np.dot(self.invQ,a), axis=0)
+            var = b - np.sum (  a * np.dot(self.invQ,a), axis=0)
         # Derivative and partial derivatives of the function
         deriv = np.zeros ( ( nn, self.D ) )
 
@@ -251,9 +251,9 @@ class GaussianProcess:
 	    return mu, deriv
         
         
-    def gpu_predict ( self, testing, prec, threashold):# self, testing, do_unc=True):
+    def gpu_predict ( self, testing, precision, threshold):
         import _gpu_predict
-        ( nn, D ) = testing.shape
+        nn, D  = testing.shape
         assert D == self.D
         expX = np.exp ( self.theta )
         
@@ -261,7 +261,7 @@ class GaussianProcess:
         M=self.inputs.shape[0]
         theta_size=self.theta.size
 
-        nblocks = np.int(np.ceil( np.float32( nn ) / threashold ))
+        nblocks = np.int(np.ceil( np.float32( nn ) / threshold ))
         block_size = np.int(np.ceil( nn / nblocks ))
         ind_start = range( np.int(0), np.int(nn), np.int(block_size) )
         ind_end = np.append( ind_start[1:], nn )
@@ -274,7 +274,7 @@ class GaussianProcess:
             ind_start[ nblocks - 1 ] = ind_end[ nblocks - 2 ]
         
         assert np.all(ind_end - ind_start > 500 )
-        assert np.all(ind_end - ind_start < threashold * 1.5 )
+        assert np.all(ind_end - ind_start < threshold * 1.5 )
             
 
 
@@ -283,7 +283,7 @@ class GaussianProcess:
         invQt = self.invQt
         invQ =  self.invQ.reshape(self.invQ.shape[0] * self.invQ.shape[1])
 
-        if prec == "float32":
+        if precision == "float32":
             inputs = np.float32( inputs )
             invQt = np.float32( invQt )
             invQ = np.float32( invQ )
@@ -302,7 +302,7 @@ class GaussianProcess:
            var_block = np.zeros( N_this_block )
            deriv_block = np.zeros( N_this_block * D )
 
-           if prec == "float32":
+           if precision == "float32":
                testing_block = np.float32(testing_block)
                mu_block = np.float32(mu_block)
                var_block = np.float32(var_block)
@@ -321,10 +321,10 @@ class GaussianProcess:
 
 
 
-    def predict(self, testing, do_unc = True, is_gpu = False, prec = 'double', threashold = 2e5):
+    def predict(self, testing, do_unc = True, is_gpu = False, precison = 'double', threshold = 2e5):
         ( nn, D ) = testing.shape
         if is_gpu == True:
-            return self.gpu_predict(testing, prec, threashold = threashold)
+            return self.gpu_predict(testing, precison, threshold = threshold)
         else:
             return self.cpu_predict(testing, do_unc)
 
