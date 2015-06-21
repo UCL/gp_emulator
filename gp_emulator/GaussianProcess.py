@@ -249,22 +249,12 @@ class GaussianProcess:
             return mu, var, deriv
         else:
 	    return mu, deriv
-        
-        
-    def gpu_predict ( self, testing, precision, threshold):
-        import _gpu_predict
-        nn, D  = testing.shape
-        assert D == self.D
-        expX = np.exp ( self.theta )
-        
-        N=testing.shape[0]
-        M=self.inputs.shape[0]
-        theta_size=self.theta.size
 
-        nblocks = np.int(np.ceil( np.float32( nn ) / threshold ))
-        block_size = np.int(np.ceil( nn / nblocks ))
-        ind_start = range( np.int(0), np.int(nn), np.int(block_size) )
-        ind_end = np.append( ind_start[1:], nn )
+    def get_gpu_block( self, size, threshold ):
+        nblocks = np.int(np.ceil( np.float64( size ) / threshold ))
+        block_size = np.int(np.ceil( size / nblocks ))
+        ind_start = range( np.int(0), np.int(size), np.int(block_size) )
+        ind_end = np.append( ind_start[1:], size )
         nblocks = len(ind_start)
         
         # the last two block should have equal size
@@ -275,56 +265,67 @@ class GaussianProcess:
         
         assert np.all(ind_end - ind_start > 500 )
         assert np.all(ind_end - ind_start < threshold * 1.5 )
-            
+        return ind_start, ind_end
 
 
-        #stretch the matrices to vector to feed _predict_wrap()
-        inputs = self.inputs.reshape(self.inputs.shape[0] * self.inputs.shape[1])
-        invQt = self.invQt
-        invQ =  self.invQ.reshape(self.invQ.shape[0] * self.invQ.shape[1])
+        
+        
+    def gpu_predict ( self, testing, precision, threshold):
+        '''
+        Parameters:
+        --------------
+        testing: 
+        precision: can be np.float32 or np.float64
+        threshold: 
+        '''
+        import _gpu_predict
+        n_predict, n_inputs = testing.shape
+        n_train = self.inputs.shape[0]
+        theta_size=self.theta.size
+        
+        assert n_inputs == self.D
+           
+        #_predict_wrap() has to be fed by one dimentional array
+        inputs = precision(self.inputs.reshape(self.inputs.shape[0] * self.inputs.shape[1]))
+        invQt = precision(self.invQt)
+        invQ =  precision(self.invQ.reshape(self.invQ.shape[0] * self.invQ.shape[1]))
+        expX = precision(np.exp(self.theta))
 
-        if precision == "float32":
-            inputs = np.float32( inputs )
-            invQt = np.float32( invQt )
-            invQ = np.float32( invQ )
-            expX = np.float32( expX )
+        result = []
+        error = []
+        deriv = np.array([]).reshape((0, n_inputs))
+        ind_start, ind_end = self.get_gpu_block( n_predict, threshold )
 
-        mu = []
-        var = []
-        deriv = np.array([]).reshape( ( 0, D) )
-
-        for block_id in xrange(len(ind_start)):
-           testing_block = testing[ind_start[block_id]:ind_end[block_id],:]   
+        for block_start, block_end in zip(ind_start, ind_end):
+           testing_block = testing[block_start:block_end,:]   
            testing_block = testing_block.reshape( testing_block.shape[0] * testing_block.shape[1] )
 
-           N_this_block = np.int(ind_end[block_id] - ind_start[block_id])
-           mu_block = np.zeros( N_this_block )
-           var_block = np.zeros( N_this_block )
-           deriv_block = np.zeros( N_this_block * D )
-
-           if precision == "float32":
-               testing_block = np.float32(testing_block)
-               mu_block = np.float32(mu_block)
-               var_block = np.float32(var_block)
-               deriv_block = np.float32(deriv_block)
+           n_predict_block = np.int(block_end - block_start)
+           result_block = np.zeros( n_predict_block )
+           error_block = np.zeros( n_predict_block )
+           deriv_block = np.zeros( n_predict_block * n_inputs )
+           
+           testing_block = precision(testing_block)
+           result_block = precision(result_block)
+           error_block = precision(error_block)
+           deriv_block = precision(deriv_block)
  
            _gpu_predict.predict_wrap(
                    expX, inputs, invQt, invQ, testing_block,
-                   mu_block, var_block, deriv_block,
-                   N_this_block, M, D, theta_size)
+                   result_block, error_block, deriv_block,
+                   n_predict_block, n_train, n_inputs, theta_size)
 
-           mu = np.append(mu, mu_block)
-           var = np.append(var, var_block)
-           deriv = np.append( deriv, deriv_block.reshape( D, N_this_block ).T, axis = 0)
+           result = np.append(result, result_block)
+           error = np.append(error, error_block)
+           deriv = np.append(deriv, deriv_block.reshape( n_inputs, n_predict_block ).T, axis = 0)
 
-        return mu, var, deriv
+        return result, error, deriv
 
 
 
-    def predict(self, testing, do_unc = True, is_gpu = False, precison = 'double', threshold = 2e5):
-        ( nn, D ) = testing.shape
+    def predict(self, testing, do_unc = True, is_gpu = False, precision = np.float64, threshold = 2e5):
         if is_gpu == True:
-            return self.gpu_predict(testing, precison, threshold = threshold)
+            return self.gpu_predict(testing, precision, threshold = threshold)
         else:
             return self.cpu_predict(testing, do_unc)
 
