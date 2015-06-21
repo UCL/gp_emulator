@@ -74,7 +74,7 @@ real *gpu_transpose(cublasHandle_t handle, real *d_matrix, const int nrow, const
  ********************************/
 void compute_error(cublasHandle_t handle, real *c_error,
         real *d_dist_matrix,const  real *d_dist_matrix_T, 
-        real *d_invQ, real *c_theta_exp,
+        real *d_invQ, const real *c_theta_exp,
         const int Npredict, const int Ntrain, const int Ninputs)
 {
     real alpha = 1.f;
@@ -192,13 +192,17 @@ void predict(const real *c_theta_exp, const real *c_train,const real *c_invQt,
 
     real *d_dist_matrix, *d_dist_matrix_T;
     
-    d_dist_matrix = compute_distance(d_predict, d_train, c_theta_exp, d_theta_exp, 
-            d_theta_exp_sqrt, Npredict, Ntrain, Ninputs);
- 
-    compute_result(handle, c_result, d_dist_matrix, d_invQt, Npredict, Ntrain, Ninputs);
-    
+    d_dist_matrix = compute_distance(d_predict, d_train, 
+            c_theta_exp, d_theta_exp, 
+            d_theta_exp_sqrt, 
+            Npredict, Ntrain, Ninputs);
+    compute_result(handle, c_result, 
+            d_dist_matrix, d_invQt, 
+            Npredict, Ntrain, Ninputs);
     d_dist_matrix_T = gpu_transpose(handle, d_dist_matrix, Ntrain, Npredict);
-    
+    compute_error(handle, c_error, d_dist_matrix, 
+            d_dist_matrix_T, d_invQ, c_theta_exp,
+            Npredict, Ntrain, Ninputs); 
     compute_deriv( handle, c_deriv, c_theta_exp, 
             d_predict, d_train, d_invQt, d_dist_matrix_T,
             Npredict, Ntrain, Ninputs);
