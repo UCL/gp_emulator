@@ -7,6 +7,37 @@
 #include "gpu_predict.h"
 #include <stdlib.h>
 #define debug
+
+/*********************************
+ * Euclidian distance calculation
+ * 1) dist_matrix = cidist(sqrt(expX_{,Ninputs}) * train * sqrt(expX_{,Ninputs} * predict)))
+ * 2) dist_matrix = -0.5 * exp(expX_{Ninputs})
+ * Notice: distance is equivalent to distance^T
+ ********************************/ 
+real *compute_distance(const real *d_predict, const real *d_train, 
+                      const real *c_theta_exp,const real *d_theta_exp, 
+                      const real *d_theta_exp_sqrt,
+                      const int Npredict, const int Ntrain, const int Ninputs)
+{
+    real *d_res_temp1, *d_res_temp2, *d_dist_matrix;
+    cudaMalloc((void **)&d_res_temp1, sizeof(real) * Ntrain * Ninputs);
+    cudaMalloc((void **)&d_res_temp2, sizeof(real) * Npredict * Ninputs);
+    cudaMalloc((void **)&d_dist_matrix, sizeof(real) * Ntrain * Npredict);
+
+    gpu_vectorTimesMatrix(d_train, d_theta_exp_sqrt, d_res_temp1, Ntrain, Ninputs);
+    gpu_vectorTimesMatrix(d_predict, d_theta_exp_sqrt, d_res_temp2, Npredict, Ninputs);
+    gpu_init_array( d_dist_matrix, 0.0, Npredict * Ntrain );
+    gpu_cdist(d_res_temp1, d_res_temp2, d_dist_matrix, Ntrain, Ninputs, Npredict, Ninputs);
+    gpu_matrixExp(d_dist_matrix, -0.5, c_theta_exp[Ninputs], Ntrain * Npredict);
+
+    cudaFree(d_res_temp1);
+    cudaFree(d_res_temp2);
+    return(d_dist_matrix);
+}
+
+
+
+
 /*********************************************//**
  * predict function:
  * CUDA version of the corresponding python code
@@ -48,28 +79,14 @@ void predict(const real *c_theta_exp, const real *c_train,const real *c_invQt,
     cublasCheckErrors(cublasSetMatrix( Ntrain, Ninputs, sizeof(real), c_train, Ntrain, d_train, Ntrain ));
     cublasCheckErrors(cublasSetMatrix( Ntrain, Ntrain, sizeof(real), c_invQ, Ntrain, d_invQ, Ntrain ));
     cublasCheckErrors(cublasSetMatrix( Npredict, Ninputs, sizeof(real), c_predict, Npredict, d_predict, Npredict));
-    
+
+    real * d_dist_matrix;
+    d_dist_matrix = compute_distance(d_predict, d_train, c_theta_exp, d_theta_exp, d_theta_exp_sqrt,
+                                    Npredict, Ntrain, Ninputs);
+   
 
         
-    /*********************************
-     * Euclidian distance calculation
-     * a = cidist(sqrt(expX_{,Ninputs}) * inputs * sqrt(expX_{,Ninputs} * testing)))
-     * Npredictotice: a is equivalent to a^T in python due to column major fashion
-     ********************************/ 
-    real *d_res_temp1, *d_res_temp2, *d_a;
-    cudaMalloc((void **)&d_res_temp1, sizeof(real) * Ntrain * Ninputs);
-    cudaMalloc((void **)&d_res_temp2, sizeof(real) * Npredict * Ninputs);
-    cudaMalloc((void **)&d_a, sizeof(real) * Ntrain * Npredict);
-
-    gpu_vectorTimesMatrix(d_train, d_theta_exp_sqrt, d_res_temp1, Ntrain, Ninputs);
-    gpu_vectorTimesMatrix(d_predict, d_theta_exp_sqrt, d_res_temp2, Npredict, Ninputs);
-    gpu_init_array( d_a, 0.0, Npredict * Ntrain );
-    gpu_cdist(d_res_temp1, d_res_temp2, d_a, Ntrain, Ninputs, Npredict, Ninputs);
-    gpu_matrixExp(d_a, -0.5, c_theta_exp[Ninputs], Ntrain * Npredict);
-
-    cudaFree(d_res_temp1);
-    cudaFree(d_res_temp2);
-
+    
     /*********************************
      * compute mu:
      * mu = a * invQt (dot product)
@@ -78,7 +95,8 @@ void predict(const real *c_theta_exp, const real *c_train,const real *c_invQt,
     cudaMalloc((void **)&d_result, sizeof(real) * Npredict);
     real alpha = 1.f;
     real beta = 0.f;
-    /*cublasCheckErrors(*/CUBLAS_GEMV(handle, CUBLAS_OP_N, Npredict, Ntrain, &alpha, d_a, Npredict, d_invQt, 1, &beta, d_result, 1);//);
+    cublasCheckErrors(CUBLAS_GEMV(handle, CUBLAS_OP_N, Npredict, Ntrain, &alpha, d_dist_matrix, 
+                Npredict, d_invQt, 1, &beta, d_result, 1));
     cudaMemcpy(c_result, d_result, sizeof(real) * Npredict, cudaMemcpyDeviceToHost);
        
     
@@ -86,19 +104,19 @@ void predict(const real *c_theta_exp, const real *c_train,const real *c_invQt,
     * compute var:
     * var = b - rowsum(a * dot(invQ, a_T))
     ********************************/
-    real *d_temp_dot, *d_a_T;
+    real *d_temp_dot, *d_dist_matrix_T;
     real *d_error;
 
     cudaMalloc((void **)&d_temp_dot, sizeof(real) * Ntrain * Npredict);
-    cudaMalloc((void **)&d_a_T, sizeof(real) * Ntrain * Npredict);
+    cudaMalloc((void **)&d_dist_matrix_T, sizeof(real) * Ntrain * Npredict);
 
-    cublasCheckErrors(CUBLAS_GEMM(handle, CUBLAS_OP_N, CUBLAS_OP_T, Ntrain, Npredict, Ntrain, &alpha, d_invQ, Ntrain, d_a, Npredict, &beta, d_temp_dot, Ntrain));
-    cublasCheckErrors(CUBLAS_GEAM(handle, CUBLAS_OP_T, CUBLAS_OP_N, Ntrain, Npredict, &alpha, d_a, Npredict, &beta, d_a, Ntrain, d_a_T, Ntrain));
+    cublasCheckErrors(CUBLAS_GEMM(handle, CUBLAS_OP_N, CUBLAS_OP_T, Ntrain, Npredict, Ntrain, &alpha, d_invQ, Ntrain, d_dist_matrix, Npredict, &beta, d_temp_dot, Ntrain));
+    cublasCheckErrors(CUBLAS_GEAM(handle, CUBLAS_OP_T, CUBLAS_OP_N, Ntrain, Npredict, &alpha, d_dist_matrix, Npredict, &beta, d_dist_matrix, Ntrain, d_dist_matrix_T, Ntrain));
     
-    cudaFree(d_a);
+    cudaFree(d_dist_matrix);
     cudaFree(d_invQ);
     
-    gpu_elementwiseMult(d_a_T, d_temp_dot, Ntrain * Npredict);
+    gpu_elementwiseMult(d_dist_matrix_T, d_temp_dot, Ntrain * Npredict);
     d_error = gpu_rowSum(d_temp_dot, Ntrain, Npredict);
     gpu_scalarMinusVec(d_error, c_theta_exp[Ninputs], Npredict );
     cudaMemcpy(c_error, d_error, sizeof(real) * Npredict, cudaMemcpyDeviceToHost);
@@ -126,7 +144,7 @@ void predict(const real *c_theta_exp, const real *c_train,const real *c_invQt,
         ptr_inputs = ptr_inputs + Ntrain;
         ptr_testing = ptr_testing + Npredict;
         alpha = c_theta_exp[i];
-        gpu_elementwiseMult(d_a_T, d_aa, Ntrain * Npredict);
+        gpu_elementwiseMult(d_dist_matrix_T, d_aa, Ntrain * Npredict);
         cublasCheckErrors(CUBLAS_GEMV(handle, CUBLAS_OP_T, Ntrain, Npredict, &alpha, d_aa, Ntrain, d_invQt, 1, &beta, d_deriv,1));
 
         cudaMemcpy(ptr_deriv, d_deriv, sizeof(real) * Npredict, cudaMemcpyDeviceToHost);
@@ -135,7 +153,7 @@ void predict(const real *c_theta_exp, const real *c_train,const real *c_invQt,
 
      cudaFree(d_result);
      cudaFree(d_invQt);
-     cudaFree(d_a_T);
+     cudaFree(d_dist_matrix_T);
      cudaFree(d_aa);
      cudaFree(d_train);
      cudaFree(d_deriv);
