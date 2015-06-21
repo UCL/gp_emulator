@@ -250,33 +250,33 @@ class GaussianProcess:
         else:
 	    return mu, deriv
 
-    def get_gpu_block( self, size, threshold ):
-        nblocks = np.int(np.ceil( np.float64( size ) / threshold ))
-        block_size = np.int(np.ceil( size / nblocks ))
+    def get_gpu_block( self, size, block_size ):
+        '''
+        Distribute a size long vector block_size, and return the start index
+        and end index of each block. To ensure size of the last block 
+        is not too small, the last two blocks will have a equal size.  
+        '''
         ind_start = range( np.int(0), np.int(size), np.int(block_size) )
         ind_end = np.append( ind_start[1:], size )
         nblocks = len(ind_start)
         
-        # the last two block should have equal size
+        # compute the size of last two blocks.
         if nblocks > 1:
             last_two_block_size = ( ind_end[ nblocks - 1 ] - ind_start[ nblocks - 2 ] ) / 2
             ind_end[ nblocks - 2 ] = ind_start[ nblocks - 2 ] + last_two_block_size
             ind_start[ nblocks - 1 ] = ind_end[ nblocks - 2 ]
-        
-        assert np.all(ind_end - ind_start > 500 )
-        assert np.all(ind_end - ind_start < threshold * 1.5 )
+       
+        assert np.all(ind_end - ind_start <= block_size )
         return ind_start, ind_end
 
-
-        
         
     def gpu_predict ( self, testing, precision, threshold):
         '''
         Parameters:
         --------------
-        testing: 
-        precision: can be np.float32 or np.float64
-        threshold: 
+        testing: 2D array n_predict * n_inputs
+        precision: np.float32 / np.float64
+        threshold: see predict() threshold.
         '''
         import _gpu_predict
         n_predict, n_inputs = testing.shape
@@ -317,6 +317,7 @@ class GaussianProcess:
 
            result = np.append(result, result_block)
            error = np.append(error, error_block)
+           #deriv produced by gpu is transposed, so here we need transpose them back.
            deriv = np.append(deriv, deriv_block.reshape( n_inputs, n_predict_block ).T, axis = 0)
 
         return result, error, deriv
@@ -324,6 +325,16 @@ class GaussianProcess:
 
 
     def predict(self, testing, do_unc = True, is_gpu = False, precision = np.float64, threshold = 2e5):
+        '''
+        Parameters:
+        --------------
+        testing: 2D array n_predict * n_inputs
+        precision: np.float32 / np.float64
+        do_unc: tag to switch on or off calculation of the uncertainty. It can only affect cpu_predict()
+        threshold: is the maximum number of n_predict that gpu_predict() can deal with.
+                If the n_predict is larger than the threshold, data will be truncated,
+                and gpu_predict will be excuted for multiple time.
+        '''
         if is_gpu == True:
             return self.gpu_predict(testing, precision, threshold = threshold)
         else:
