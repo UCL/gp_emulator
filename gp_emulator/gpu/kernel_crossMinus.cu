@@ -18,10 +18,10 @@ void kernel_crossMinus(const real *v1,const real *v2, real *mat_res, const int v
 void gpu_crossMinus(const real *v1, const real *v2, real *mat_res, const int v1_len, const int v2_len)
 {
     dim3 nthread, nblock;
-    if( v2_len < 1024 )
+    if( v2_len < MAX_NUM_THREAD )
         nthread.y = v2_len;
     else
-        nthread.y = 1024;
+        nthread.y = MAX_NUM_THREAD;
     
     nthread.x = 1;
     nblock.x = v1_len;

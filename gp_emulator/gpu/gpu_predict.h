@@ -13,15 +13,14 @@
 #include <cublas_v2.h>
 #define DOUBLE__PRECISION
 #define CUDA_BLOCK 2
- 
+#define MIN_NPREDICT 1000 //ensure there will be enough amount of threads to launch. 
+#define MAX_NUM_THREAD 1024 //sm_20
+#define MAX_NUM_BLOCK 65536
 #ifdef DOUBLE__PRECISION
   #define real double
 #else
   #define real float
 #endif 
-
-#define IDX2D(i,j,ld) (((j)*(ld))+(i))//column major
-
 
 #ifdef DOUBLE__PRECISION
   #define CUBLAS_GEMV cublasDgemv
@@ -33,7 +32,11 @@
   #define CUBLAS_GEAM cublasSgeam
 #endif
 
-
+__forceinline__ __host__ __device__
+int IDX2D(int row, int col, int lead_dim)
+{
+    return(((col)*(lead_dim))+(row));
+}
 
 PyArrayObject *pyvector(PyObject *objin);
 real*pyvector_to_Carrayptrs(PyArrayObject *arrayin);

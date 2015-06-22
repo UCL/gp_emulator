@@ -1,10 +1,10 @@
 /*********************************************//**
  * vector elementwise multiplication
- * v2_{i} = v2_{i} * v1_{i}
+ * vector2_{i} = vector2_{i} * vector1_{i}
  *********************************************/
 #include "gpu_predict.h"
 __global__
-void kernel_elementwiseMult(const real *v1, real *v2, const int size)
+void kernel_elementwiseMult(const real *vector1, real *vector2, const int size)
 {
     int i, index;
     int ix = blockIdx.x * blockDim.x + threadIdx.x;
@@ -13,29 +13,30 @@ void kernel_elementwiseMult(const real *v1, real *v2, const int size)
         index = ix * CUDA_BLOCK + i;
         if( index < size)
         {
-            v2[index] = v2[index] * v1[index];
+            vector2[index] = vector2[index] * vector1[index];
         }
     }
 }
 
 
-void gpu_elementwiseMult( const real *v1, real *v2, const int size )
+void gpu_elementwiseMult( const real *vector1, real *vector2, const int size )
 {
     int nthread, nblock;
 
-    if( size < float(1024) / float(CUDA_BLOCK) )
+    if( size < float(MAX_NUM_THREAD) / float(CUDA_BLOCK) )
     {
-        printf("gpu_elementwiseMult: size = %d [ < 1024 / CUDA_BLOCK ].\n", size);
+        printf("gpu_elementwiseMult: size = %d [ < MAX_NUM_THREAD / CUDA_BLOCK ].\n", size);
         exit(EXIT_FAILURE);
     }
 
-    if( size > 65536 * 1024 )
-    {
-        printf("gpu_elementwiseMult: size = %d [ > 65536 * 1024 / CUDA_BLOCK ].\n", size);
-        exit(EXIT_FAILURE);
-    }
-
-    nthread = 1024;
+    nthread = MAX_NUM_THREAD;
     nblock = ceil( float(size) / float(CUDA_BLOCK) / float(nthread) );
-    kernel_elementwiseMult<<<nblock,nthread>>>(v1, v2, size);
+    
+    if( nblock > MAX_NUM_BLOCK )
+    {
+        printf("gpu_elementwiseMult: nblock outside the range of [1, MAX_NUM_BLOCK]\n");
+        exit(EXIT_FAILURE);
+    }
+    
+    kernel_elementwiseMult<<<nblock,nthread>>>(vector1, vector2, size);
 }

@@ -7,6 +7,9 @@
  *********************************************/
 #include "gpu_predict.h"
 #define min(a, b) (((a) < (b)) ? (a) : (b))
+#define CDIST_NTHREAD_X 256
+#define CDIST_NTHREAD_Y 4
+#define CDIST_NTHREAD_Z 1
 
 __global__
 void kernel_cdist(const real *input1, const real *input2, real *output, const int nrow1, const int nrow2, const int ncol)
@@ -22,16 +25,16 @@ void kernel_cdist(const real *input1, const real *input2, real *output, const in
 
 void gpu_cdist(const real *input1, const real *input2, real *output, const int nrow1, const int ncol1, const int nrow2, const int ncol2)
 {
-    if( nrow2 < 1000 )
+    if( nrow2 < MIN_NPREDICT )
     {
-        printf("gpu_cdist: nrow2 < 1000");
+        printf("gpu_cdist: nrow2(Npredict) < %d\n", MIN_NPREDICT);
         exit(EXIT_FAILURE);
     }
 
     dim3 nthread, nblock;
-    nthread.x = 256;
-    nthread.y = 4;
-    nthread.z = 1;
+    nthread.x = CDIST_NTHREAD_X;
+    nthread.y = CDIST_NTHREAD_Y;
+    nthread.z = CDIST_NTHREAD_Z;
 
     nblock.x = ceil( float(nrow2) / float(nthread.x) );
     nblock.y = ceil( float(nrow1) / float(nthread.y) );
