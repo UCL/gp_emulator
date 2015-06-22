@@ -20,7 +20,7 @@ if __name__ == '__main__':
     print 'Problem_size\tCPU time\tGPU time\tSpeedup\tStatus'
     print '-----------------------------'
 
-    for size in xrange(np.int(1e4), np.int(1e7), np.int(1e4)):
+    for size in xrange(np.int(1e3), np.int(1e5), np.int(1e4)):
         N = size
         M = 250
         P = 10
@@ -39,7 +39,7 @@ if __name__ == '__main__':
     	
         #GPU predict
         start = time.time()
-    	[mu_g, var_g, deriv_g] = gp.predict(testing, is_gpu = True, prec = 'float64', threashold = 2e5)
+    	[mu_g, var_g, deriv_g] = gp.predict(testing, is_gpu = True, precision = np.float64, threshold = 1e4)
     	end =time.time()
     	gputime = end - start
         print "%d\t%.2fs\t%.2fs\t%.2fx\t" % (N, cputime, gputime, cputime/gputime),
