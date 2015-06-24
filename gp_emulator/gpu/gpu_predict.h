@@ -122,8 +122,7 @@ class gpuPredict
     void compute_error(void);
     void compute_deriv(void);
     void predict(void);
-
-
+    void free_gpu(void);
 };
 
 
