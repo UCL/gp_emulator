@@ -6,6 +6,7 @@ import _gpu_predict
 import time
 from gp_emulator import GaussianProcess 
 from types import MethodType
+import sys
 
 def set_testing_val (self, P, N, M):
     self.D = P
@@ -19,7 +20,7 @@ if __name__ == '__main__':
     GaussianProcess.set_testing_val = MethodType(set_testing_val, None, GaussianProcess)
     print 'Problem_size\tCPU time\tGPU time\tSpeedup\tStatus'
     print '-----------------------------'
-
+    
     for size in xrange(np.int(1e3), np.int(1e5), np.int(1e4)):
         N = size
         M = 250
@@ -39,7 +40,7 @@ if __name__ == '__main__':
     	
         #GPU predict
         start = time.time()
-    	[mu_g, var_g, deriv_g] = gp.predict(testing, is_gpu = True, precision = np.float64, threshold = 1e4)
+        [mu_g, var_g, deriv_g] = gp.predict(testing, is_gpu = True, precision = np.float64, threshold = 1e4)
     	end =time.time()
     	gputime = end - start
         print "%d\t%.2fs\t%.2fs\t%.2fx\t" % (N, cputime, gputime, cputime/gputime),

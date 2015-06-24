@@ -48,6 +48,10 @@ class build(_build.build):
         run_cmake()
         os.chdir(cwd)
         _build.build.run(self)
+class test(_install.install):
+    def run(self):
+        os.system("python tests/benchmark.py")
+
 
 
 setup(name='gp_emulator',
@@ -57,5 +61,5 @@ setup(name='gp_emulator',
       author_email='j.gomez-dans@ucl.ac.uk',
       url='http://bitbucket.org/gomezdansj/gp_emulator',
       packages=['gp_emulator'],
-      cmdclass={'build':build, 'install':install},
+      cmdclass={'build':build, 'install':install, 'test':test},
      )

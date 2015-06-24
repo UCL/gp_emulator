@@ -11,7 +11,7 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
-#define DOUBLE__PRECISION
+//#define DOUBLE__PRECISION
 #define CUDA_BLOCK 2
 #define MIN_NPREDICT 1000 //ensure there will be enough amount of threads to launch. 
 #define MAX_NUM_THREAD 1024 //sm_20
