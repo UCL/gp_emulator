@@ -166,14 +166,14 @@ void gpuPredict::predict( void )
      gpuPredict::compute_result();
      gpuPredict::compute_error();
      gpuPredict::compute_deriv();
-    
-    cublasDestroy(handle);
-    cudaFree(d_invQt);
-    cudaFree(d_dist_matrix_T);
-    cudaFree(d_train);
-    cudaFree(d_theta_exp);
-    cudaFree(d_predict);
-    cudaFree(d_theta_exp_sqrt);
+     
+     cublasDestroy(handle);
+     cudaFree(d_invQt);
+     cudaFree(d_dist_matrix_T);
+     cudaFree(d_train);
+     cudaFree(d_theta_exp);
+     cudaFree(d_predict);
+     cudaFree(d_theta_exp_sqrt);
 }
 
 
