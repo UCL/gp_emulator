@@ -69,6 +69,69 @@ void gpu_crossMinus(const real *v1, const real *v2, real *mat_res, const int v1_
 
 
 
+
+class gpuPredict
+{
+  real *c_result, *c_error, *c_deriv;
+  const real *c_theta_exp, *c_theta_exp_sqrt;
+  const real *c_invQt, *c_invQ, *c_predict, *c_train, *c_inputs;
+  const int Npredict, Ntrain, Ninputs;
+  const int theta_size;
+
+  real *d_result, *d_error, *d_deriv;
+  real *d_theta_exp, *d_theta_exp_sqrt;
+  real *d_invQt, *d_invQ, *d_predict, *d_train, *d_inputs;
+  real *d_dist_matrix; real *d_dist_matrix_T;
+  cublasHandle_t handle;
+
+
+
+  public:
+    gpuPredict(real *ctheta_exp, 
+      real *ctheta_exp_sqrt,
+      real *cinvQt,
+      real *cinvQ, 
+      real *cpredict,          
+      real *ctrain,
+      real *cresult, 
+      real *cerror,
+      real *cderiv,
+      int npredict,
+      int ntrain,
+      int ninputs,
+      int thetasize):
+    c_theta_exp(ctheta_exp),
+    c_theta_exp_sqrt(ctheta_exp_sqrt),
+    c_invQt(cinvQt),
+    c_invQ(cinvQ),
+    c_predict(cpredict),
+    c_train(ctrain),
+    c_result(cresult),
+    c_error(cerror),
+    c_deriv(cderiv),
+    Npredict(npredict),
+    Ntrain(ntrain),
+    Ninputs(ninputs),
+    theta_size(thetasize){};
+    
+
+    real * gpu_transpose(real *, const int, const int);
+    void init_gpu(void);
+    void compute_distance(void);
+    void compute_result(void);
+    void compute_error(void);
+    void compute_deriv(void);
+    void predict(void);
+
+
+};
+
+
+
+
+
+
+
 // error check macros
 #define cudaCheckErrors(msg) \
     do { \
