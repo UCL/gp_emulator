@@ -79,7 +79,7 @@ class GP:
 
 
 if __name__ == '__main__':
-    for size in xrange(10000, 1000000, 10000):
+    for size in xrange(int(1e4), int(2e5),int(5e4)):
         N=size
         M=250
         P=10
