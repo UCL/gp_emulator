@@ -7,7 +7,7 @@ real *expX, *expXsqrt, *in_train, *in_predict, *invQ, *invQt;
 real *cdist_a, *cdist_expa;
 real *cdist_test_var1, *cdist_test_var2, *cdist_test_var3;
 real *error_test1;
-real *result_t, *error_t, *deriv_t;
+real *result_py, *error_py, *deriv_py;
 int Npredict_t, Ntrain_t, Ninputs_t;
 int theta_size_t;
 
@@ -26,9 +26,9 @@ int init_suite1(void)
     cdist_expa      =  readTestData( "cdist_expa.bin", Ntrain_t * Npredict_t ); 
     
     error_test1     =  readTestData( "error_test1.bin", Ntrain_t * Npredict_t );
-    result_t          =  readTestData( "result.bin", Ntrain_t * Npredict_t);
-    error_t           =  readTestData( "error.bin", Npredict_t);
-    deriv_t           =  readTestData( "deriv.bin", Ntrain_t * Npredict_t );
+    result_py          =  readTestData( "result.bin", Ntrain_t * Npredict_t);
+    error_py           =  readTestData( "error.bin", Npredict_t);
+    deriv_py           =  readTestData( "deriv.bin", Ntrain_t * Npredict_t );
     
     return 0;
 }

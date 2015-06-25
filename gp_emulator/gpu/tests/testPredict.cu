@@ -24,9 +24,9 @@ void testPredict(void)
 
     gpu_deriv = computeTranspose( gpu_deriv, Npredict_t, Ninputs_t);
     
-    compare_result( gpu_result, result_t, Npredict_t, EPSILON_AVG, EPSILON_MAX, "result");
-    compare_result( gpu_error, error_t, Npredict_t, EPSILON_AVG, EPSILON_MAX,  "error");
-    compare_result( gpu_deriv, deriv_t, Npredict_t * Ninputs_t, EPSILON_AVG, EPSILON_MAX, "deriv");
+    compare_result( gpu_result, result_py, Npredict_t, EPSILON_AVG, EPSILON_MAX, "result");
+    compare_result( gpu_error, error_py, Npredict_t, EPSILON_AVG, EPSILON_MAX,  "error");
+    compare_result( gpu_deriv, deriv_py, Npredict_t * Ninputs_t, EPSILON_AVG, EPSILON_MAX, "deriv");
     
     free(invQ_T);
     free(train_T);

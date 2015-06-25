@@ -9,7 +9,7 @@ extern real *cdist_a, *cdist_expa;
 extern real *cdist_test_var1, *cdist_test_var2, *cdist_test_var3;
 extern real *error_test1;
 
-extern real *result_t, *error_t, *deriv_t;
+extern real *result_py, *error_py, *deriv_py;
 
 extern int Npredict_t, Ntrain_t, Ninputs_t;
 extern int theta_size_t;
@@ -47,5 +47,5 @@ void testCublasgemm(const real *c_mat1,
 void testPredict(real *expX, real *expXsqrt, 
         real *invQt, real *invQ, real *in_predict, real *in_train, 
         int Npredict_t, int  Ntrain_t, int Ninputs_t, int theta_size_t, 
-        real *result_t, real *error_t, real *deriv_t);*/
+        real *result_py, real *error_t, real *deriv_py);*/
 void testPredict(void);
