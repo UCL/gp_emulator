@@ -37,16 +37,16 @@ class GP:
         
         t_expX.tofile("./data/expX.bin")
         t_expXsqrt.tofile("./data/expXsqrt.bin")
-        t_inputs.tofile("./data/inputs.bin")
-        t_testing.tofile("./data/testing.bin")
+        t_inputs.tofile("./data/in_train.bin")
+        t_testing.tofile("./data/in_predict.bin")
         cdist_test_var_1.tofile("./data/cdist_test_var1.bin")
         cdist_test_var_2.tofile("./data/cdist_test_var2.bin")
         cdist_test_var_3.tofile("./data/cdist_a.bin")
         cdist_test_var_4.tofile("./data/cdist_expa.bin")    
         
         t_invQ.tofile("./data/invQ.bin")
-        mu.tofile("./data/mu.bin")
-        var_test_1.tofile("./data/var_test1.bin")
+        mu.tofile("./data/result.bin")
+        var_test_1.tofile("./data/error_test1.bin")
         self.invQt.tofile("./data/invQt.bin")
 
 
@@ -69,7 +69,7 @@ class GP:
             aa = self.inputs[:,d].flatten()[None,:] - testing[:,d].flatten()[:,None]
             c = a*aa.T
             deriv[:, d] = expX[d]*np.dot(c.T, self.invQt)
-        var.tofile("./data/var.bin")
+        var.tofile("./data/error.bin")
         deriv.tofile("./data/deriv.bin")
 
         if do_unc:
@@ -79,7 +79,7 @@ class GP:
 
 
 if __name__ == '__main__':
-    for size in xrange(int(1e4), int(2e5),int(5e4)):
+    for size in xrange(int(12345), int(1e5),int(6e4)):
         N=size
         M=250
         P=10
