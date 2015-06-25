@@ -1,23 +1,18 @@
 #include "gpu_predict.h"
-//ld_in is the leading dimension of input matrix
-//ld_out is the leading dimension of the output matrix
-extern "C"{
-real *computeTranspose(const real *matrix, const  int ld_in, const  int ld_out)
+
+real *computeTranspose(const real *matrix, const  int lead_dim_in, const  int lead_dim_out)
 {
     int x, y;
     real * temp;
-    temp = ( real *)malloc(sizeof(real) * ld_in * ld_out);
-//    for ( i = 0; i < ld_in * ld_out; ++i)
-//        temp[i] = matrix[i];
+    temp = ( real *)malloc(sizeof(real) * lead_dim_in * lead_dim_out);
 
-    for ( y = 0; y < ld_out; ++y )
+    for ( y = 0; y < lead_dim_out; ++y )
     {
-        for ( x = 0; x < ld_in; ++x )
+        for ( x = 0; x < lead_dim_in; ++x )
         {
-            temp[(x * ld_out) + y] = matrix[(y * ld_in) + x];                                                                
+            temp[(x * lead_dim_out) + y] = matrix[(y * lead_dim_in) + x];                                                                
 
         }   
     }
     return(temp);
-}
 }
