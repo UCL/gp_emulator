@@ -4,30 +4,31 @@
  * aa_{ix, iy} = inputs_{ix} - testing_{iy}
  *********************************************/
 __global__
-void kernel_crossMinus(const real *v1,const real *v2, real *mat_res, const int v1_len, const int v2_len)
+void kernel_crossMinus(const real *vec1,const real *vec2, real *matrix_result, const int vec1_len, const int vec2_len)
 {
     int ix = blockIdx.x * blockDim.x + threadIdx.x;
     int iy = blockIdx.y * blockDim.y + threadIdx.y;
 
-    if(ix < v1_len && iy < v2_len)
-        mat_res[IDX2D(ix, iy, v1_len)] = v1[ix] - v2[iy];
+    if(ix < vec1_len && iy < vec2_len)
+        matrix_result[IDX2D(ix, iy, vec1_len)] = vec1[ix] - vec2[iy];
 }
 
 
 
-void gpu_crossMinus(const real *v1, const real *v2, real *mat_res, const int v1_len, const int v2_len)
+void gpu_crossMinus(const real *vec1, const real *vec2, real *matrix_result, const int vec1_len, const int vec2_len)
 {
+printf("crossMinus  ");
     dim3 nthread, nblock;
-    if( v2_len < MAX_NUM_THREAD )
-        nthread.y = v2_len;
+    if( vec2_len < MAX_NUM_THREAD )
+        nthread.y = vec2_len;
     else
         nthread.y = MAX_NUM_THREAD;
     
     nthread.x = 1;
-    nblock.x = v1_len;
-    nblock.y = ceil( float(v2_len) / float(nthread.y) );
+    nblock.x = vec1_len;
+    nblock.y = ceil( float(vec2_len) / float(nthread.y) );
 
-    kernel_crossMinus<<< nblock, nthread >>>(v1, v2, mat_res, v1_len, v2_len);
+    kernel_crossMinus<<< nblock, nthread >>>(vec1, vec2, matrix_result, vec1_len, vec2_len);
 }
 
 

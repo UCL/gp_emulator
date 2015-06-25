@@ -22,7 +22,6 @@ static PyMethodDef gpuMethods[] =
  * Initialize the C_test functions 
  * Module name must be _C_arraytest in compile and linked 
  **********************************/
-
 extern "C"{
 void init_gpu_predict()  
 {
@@ -132,19 +131,15 @@ PyObject *predict_wrap ( PyObject *self, PyObject *args )
     c_train_T = computeTranspose( c_train, Ninputs, Ntrain );
     c_predict_T = computeTranspose( c_predict, Ninputs, Npredict);
 
-    
+    //get c_theta_exp_sqrt
     real *c_theta_exp_sqrt;
     c_theta_exp_sqrt = (real *)malloc( sizeof(real) * theta_size );
-    for( i=0; i < theta_size; i++ )
+    for( i = 0; i < theta_size; i++ )
     {
         c_theta_exp_sqrt[i] = sqrt( c_theta_exp[i] );
     }
 
-
-    // predict( c_theta_exp, c_train_T, c_invQt, c_invQ_T, c_predict_T, 
-    //         c_result, c_error, c_deriv,
-    //         Npredict, Ntrain, Ninputs, theta_size );
-
+    //predict
     gpuPredict gpu_predict(
         c_theta_exp, c_theta_exp_sqrt,
         c_invQt, c_invQ_T, 
@@ -154,13 +149,10 @@ PyObject *predict_wrap ( PyObject *self, PyObject *args )
     gpu_predict.predict();
 
 
-
-
-
-
     free(c_invQ_T);
     free(c_train_T);
     free(c_predict_T);
+    free(c_theta_exp_sqrt);
    
     Py_INCREF(Py_None);
     return Py_None;

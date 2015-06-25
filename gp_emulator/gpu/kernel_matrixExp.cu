@@ -20,19 +20,19 @@ void gpu_matrixExp( real *matrix,const real alpha,const real beta, const int siz
 {
     int nthread, nblock;
 
-    if( size < float(1024) / float(CUDA_BLOCK) )
+    if( size < float( MAX_NUM_THREAD ) / float(CUDA_BLOCK) )
     {
-        printf("gpu_matrixExp: size = %d [ < 1024 / CUDA_BLOCK ].\n", size);
+        printf("gpu_matrixExp: size = %d [ < MAX_NUM_THREAD / CUDA_BLOCK ].\n", size);
         exit(EXIT_FAILURE);
     }
 
-    if( size > 65536 * 1024 )
+    if( size > MAX_NUM_BLOCK * MAX_NUM_THREAD )
     {
-        printf("gpu_matrixExp: size = %d [ > 65536 * 1024 / CUDA_BLOCK ].\n", size);
+        printf("gpu_matrixExp: size = %d [ > MAX_NUM_BLOCK * MAX_NUM_THREAD / CUDA_BLOCK ].\n", size);
         exit(EXIT_FAILURE);
     }
     
-    nthread = 1024; 
+    nthread = MAX_NUM_THREAD; 
     nblock = ceil( float(size) / float(CUDA_BLOCK) / float(nthread) );
     kernel_matrixExp<<<nblock,nthread>>>(matrix, alpha, beta, size);
 }

@@ -25,6 +25,7 @@ void kernel_cdist(const real *input1, const real *input2, real *output, const in
 
 void gpu_cdist(const real *input1, const real *input2, real *output, const int nrow1, const int ncol1, const int nrow2, const int ncol2)
 {
+    printf("cdist  ");
     if( nrow2 < MIN_NPREDICT )
     {
         printf("gpu_cdist: %d [nrow2(Npredict)] < %d\n",nrow2, MIN_NPREDICT);

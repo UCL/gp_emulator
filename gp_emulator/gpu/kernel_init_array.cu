@@ -21,20 +21,20 @@ void kernel_init_array(real *vec, const real init_val, const int vec_len)
 void gpu_init_array(real *vec, const int init_val, const int vec_len)
 {
     int nthread, nblock;
-
-    if( CUDA_BLOCK * vec_len < 1024)
+    
+    if( CUDA_BLOCK * vec_len < MAX_NUM_THREAD)
     {
         nthread = ceil( vec_len / CUDA_BLOCK );
         nblock = 1;
     }
     else
     {
-        if( vec_len / CUDA_BLOCK > 65536 * 1024 ) // largest block size for sm_2.0
+        if( vec_len / CUDA_BLOCK > MAX_NUM_BLOCK * MAX_NUM_THREAD ) // largest block size for sm_2.0
         {
-            printf("gpu_init_array: vector length / CUDA_BLOCK = %d > 1024 * 1024.\n", vec_len/CUDA_BLOCK);
+            printf("gpu_init_array: vector length / CUDA_BLOCK = %d > MAX_NUM_BLOCK * MAX_NUM_THREAD.\n", vec_len/CUDA_BLOCK);
             exit(EXIT_FAILURE);
         }
-        nthread = 1024;
+        nthread = MAX_NUM_THREAD;
         nblock = ceil( float(vec_len) / nthread / float(CUDA_BLOCK) );
     }
     kernel_init_array<<< nblock, nthread >>>(vec, init_val, vec_len);

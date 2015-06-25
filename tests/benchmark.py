@@ -8,11 +8,11 @@ from gp_emulator import GaussianProcess
 from types import MethodType
 import sys
 
-def set_testing_val (self, P, N, M):
-    self.D = P
-    self.theta = np.random.random((P+2))
-    self.invQ = np.random.random((M,M))
-    self.invQt = np.random.random ((M))
+def set_testing_val (self, Ninputs, Npredict, Ntrain):
+    self.D = Ninputs
+    self.theta = np.random.random((Ninputs+2))
+    self.invQ = np.random.random(( Ntrain, Ntrain ))
+    self.invQt = np.random.random ((Ntrain))
 
 
 if __name__ == '__main__':
@@ -21,16 +21,15 @@ if __name__ == '__main__':
     print 'Problem_size\tCPU time\tGPU time\tSpeedup\tStatus'
     print '-----------------------------'
     
-    for size in xrange(np.int(1e3), np.int(1e5), np.int(1e4)):
-        N = size
-        M = 250
-        P = 10
+    for Npredict in xrange(np.int(1e5), np.int(1e6), np.int(1e5)):
+        Ntrain = 250
+        Ninputs = 10
 
-        inputs = np.random.random((M,P))
-        testing=np.random.random((N,P))
+        inputs = np.random.random(( Ntrain, Ninputs))
+        testing = np.random.random(( Npredict, Ninputs))
         
         gp = GaussianProcess(inputs, [])
-        gp.set_testing_val(P, N, M)
+        gp.set_testing_val(Ninputs, Npredict, Ntrain)
 
         #CPU predict
     	start = time.time()
@@ -40,10 +39,10 @@ if __name__ == '__main__':
     	
         #GPU predict
         start = time.time()
-        [mu_g, var_g, deriv_g] = gp.predict(testing, is_gpu = True, precision = np.float64, threshold = 1e4)
+        [mu_g, var_g, deriv_g] = gp.predict(testing, is_gpu = True, precision = np.float32, threshold = 1e5)
     	end =time.time()
     	gputime = end - start
-        print "%d\t%.2fs\t%.2fs\t%.2fx\t" % (N, cputime, gputime, cputime/gputime),
+        print "%d\t%.2fs\t%.2fs\t%.2fx\t" % (Npredict, cputime, gputime, cputime/gputime),
 
     
     

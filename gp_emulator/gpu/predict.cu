@@ -7,8 +7,6 @@
  *********************************************/
 #include "gpu_predict.h"
 #include <stdlib.h>
-#define debug
-
 
 void gpuPredict::init_gpu(void)
 {
@@ -33,9 +31,6 @@ void gpuPredict::init_gpu(void)
                 Ntrain, Ntrain, sizeof(real), c_invQ, Ntrain, d_invQ, Ntrain ));
     cublasCheckErrors(cublasSetMatrix( 
                 Npredict, Ninputs, sizeof(real), c_predict, Npredict, d_predict, Npredict));
-
-
-
 }
 
 /*********************************//*
@@ -128,7 +123,6 @@ void gpuPredict::compute_error()
 
 /*********************************//*
  * compute deriv:
- *  
  ********************************/
 void gpuPredict::compute_deriv( void )
 {

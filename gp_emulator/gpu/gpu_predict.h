@@ -11,11 +11,12 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
-//#define DOUBLE__PRECISION
-#define CUDA_BLOCK 2
+
+#define CUDA_BLOCK 5
 #define MIN_NPREDICT 1000 //ensure there will be enough amount of threads to launch. 
 #define MAX_NUM_THREAD 1024 //sm_20
 #define MAX_NUM_BLOCK 65536
+
 #ifdef DOUBLE__PRECISION
   #define real double
 #else
@@ -53,11 +54,11 @@ void getPredictDataFromPython(PyObject *args, real **c_theta_exp, real **c_invQt
 #ifdef __cplusplus
 extern "C"{
 #endif
-void predict(const real *c_theta_exp,const  real *c_inputs,const real *c_invQt, const real *c_invQ, const real *c_testing, real *c_mu, real *c_var, real *c_deriv, const int N, const int M, const int  D, const int theta_size);
 real *computeTranspose(const real *matrix, const  int size_in, const  int size_out);
 void gpu_vectorTimesMatrix(const real *A, const real *v, real *res, int nrows, int ncols);
 void gpu_init_array(real *vec, const int init_val, const int vec_len);
-void gpu_cdist(const real *input1, const real *input2, real *output, const int nrow1, const int ncol1, const int nrow2, const int ncol2);
+void gpu_cdist(const real *input1, const real *input2, real *output, const int nrow1, const int ncol1,
+        const int nrow2, const int ncol2);
 void gpu_matrixExp( real *matrix,const real alpha,const real beta, const int size );
 void gpu_elementwiseMult( const real *v1, real *v2, const int size );
 void gpu_scalarMinusVec( real *matrix, const real scalar, const int size );
