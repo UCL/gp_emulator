@@ -1,43 +1,37 @@
 #include "gpu_predict_test.h"
-#define IDX2D(i,j,ld) (((j)*(ld))+(i))
 
-
-void testCdist( const real *in1,const real *in2, const real *res, 
-        const int in1_nrows, const int in2_nrows, const int in_ncols )
+void testCdist( const real *matrix1,const real *matrix2, const real *result, 
+        const int matrix1_nrows, const int matrix2_nrows, const int matrix_ncols )
 {
-    int i, error;
-    real *in1_T, *in2_T, *gpu_res;
-    real *d_in1, *d_in2, *d_res; 
+    int i;
+    real *matrix1_T, *matrix2_T, *gpu_result;
+    real *d_matrix1, *d_matrix2, *d_result; 
 
-//    in1_T = (real *)malloc( sizeof(real) * in1_nrows * in_ncols );
-//    in2_T = (real *)malloc( sizeof(real) * in2_nrows * in_ncols );
-    gpu_res = (real *)malloc( sizeof(real) * in1_nrows * in2_nrows ); 
-    in1_T = computeTranspose( in1, in_ncols, in1_nrows );
-    in2_T = computeTranspose( in2, in_ncols, in2_nrows );
-    
-    
+    gpu_result = (real *)malloc( sizeof(real) * matrix1_nrows * matrix2_nrows ); 
+    matrix1_T = computeTranspose( matrix1, matrix_ncols, matrix1_nrows );
+    matrix2_T = computeTranspose( matrix2, matrix_ncols, matrix2_nrows );
     
     /*GPU part*/
-    for( i = 0; i < in1_nrows * in2_nrows; i++ )
-        gpu_res[i] = 0;
+    for( i = 0; i < matrix1_nrows * matrix2_nrows; i++ )
+        gpu_result[i] = 0;
     
     
-    cudaMalloc((void **)&d_in1, sizeof(real) * in1_nrows * in_ncols );
-    cudaMalloc((void **)&d_in2, sizeof(real) * in2_nrows * in_ncols );
-    cudaMalloc((void **)&d_res, sizeof(real) * in2_nrows * in1_nrows );
-    cublasCheckErrors(cublasSetMatrix( in1_nrows, in_ncols, sizeof(real), in1_T, in1_nrows, d_in1, in1_nrows) );
-    cublasCheckErrors(cublasSetMatrix( in2_nrows, in_ncols, sizeof(real), in2_T, in2_nrows, d_in2, in2_nrows) );
-    cublasCheckErrors(cublasSetMatrix( in2_nrows, in1_nrows, sizeof(real), gpu_res, in2_nrows, d_res,in2_nrows) );
-    gpu_cdist(d_in1, d_in2, d_res, in1_nrows, in_ncols, in2_nrows, in_ncols);
-    cudaMemcpy(gpu_res, d_res, sizeof(real) * in2_nrows * in1_nrows, cudaMemcpyDeviceToHost);
+    cudaMalloc((void **)&d_matrix1, sizeof(real) * matrix1_nrows * matrix_ncols );
+    cudaMalloc((void **)&d_matrix2, sizeof(real) * matrix2_nrows * matrix_ncols );
+    cudaMalloc((void **)&d_result, sizeof(real) * matrix2_nrows * matrix1_nrows );
+    cublasCheckErrors(cublasSetMatrix( matrix1_nrows, matrix_ncols, sizeof(real), matrix1_T, matrix1_nrows, d_matrix1, matrix1_nrows) );
+    cublasCheckErrors(cublasSetMatrix( matrix2_nrows, matrix_ncols, sizeof(real), matrix2_T, matrix2_nrows, d_matrix2, matrix2_nrows) );
+    cublasCheckErrors(cublasSetMatrix( matrix2_nrows, matrix1_nrows, sizeof(real), gpu_result, matrix2_nrows, d_result,matrix2_nrows) );
+    gpu_cdist(d_matrix1, d_matrix2, d_result, matrix1_nrows, matrix_ncols, matrix2_nrows, matrix_ncols);
+    cudaMemcpy(gpu_result, d_result, sizeof(real) * matrix2_nrows * matrix1_nrows, cudaMemcpyDeviceToHost);
     
-    compare_result(gpu_res, res, in1_nrows * in2_nrows, EPSILON_AVG, EPSILON_MAX, "RESULT");
+    compare_result(gpu_result, result, matrix1_nrows * matrix2_nrows, EPSILON_AVG, EPSILON_MAX, "RESULT");
     
-    free(in1_T);
-    free(in2_T);
-    free(gpu_res);
+    free(matrix1_T);
+    free(matrix2_T);
+    free(gpu_result);
    
-    cudaFree(d_in1);
-    cudaFree(d_in2);
-    cudaFree(d_res);
+    cudaFree(d_matrix1);
+    cudaFree(d_matrix2);
+    cudaFree(d_result);
 }

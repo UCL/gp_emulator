@@ -16,8 +16,6 @@ class GP:
         ( nn, D ) = testing.shape
         assert D == self.D
         expX=np.exp(self.theta)
-
-
         
         t_expX = expX
         t_expXsqrt = np.sqrt(expX[:(self.D)])
