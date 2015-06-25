@@ -1,4 +1,4 @@
-/* A file to test imorting C modules for handling arrays to Python */
+/* A file to test importing C modules for handling arrays to Python */
 
 #include "Python.h"
 #include "arrayobject.h"
