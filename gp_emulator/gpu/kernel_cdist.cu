@@ -27,7 +27,7 @@ void gpu_cdist(const real *input1, const real *input2, real *output, const int n
 {
     if( nrow2 < MIN_NPREDICT )
     {
-        printf("gpu_cdist: nrow2(Npredict) < %d\n", MIN_NPREDICT);
+        printf("gpu_cdist: %d [nrow2(Npredict)] < %d\n",nrow2, MIN_NPREDICT);
         exit(EXIT_FAILURE);
     }
 

@@ -34,6 +34,8 @@ void gpuPredict::init_gpu(void)
     cublasCheckErrors(cublasSetMatrix( 
                 Npredict, Ninputs, sizeof(real), c_predict, Npredict, d_predict, Npredict));
 
+
+
 }
 
 /*********************************//*
@@ -169,7 +171,6 @@ void gpuPredict::free_gpu(void)
      cudaFree(d_theta_exp_sqrt);
 }
 
-
 void gpuPredict::predict( void )
 {
      gpuPredict::init_gpu();
@@ -179,7 +180,6 @@ void gpuPredict::predict( void )
      gpuPredict::compute_deriv();
      gpuPredict::free_gpu();
 }
-
 
 
 

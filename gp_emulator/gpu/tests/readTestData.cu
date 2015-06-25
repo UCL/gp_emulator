@@ -2,7 +2,7 @@
 #include <string.h>
 
 
-real *readTestData(char *file_name, int M, int N, int D, int size)
+real *readTestData(char *file_name, const int size)
 {
     int i;
     char path[400];

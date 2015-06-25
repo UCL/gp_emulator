@@ -67,9 +67,6 @@ void gpu_crossMinus(const real *v1, const real *v2, real *mat_res, const int v1_
 }
 #endif
 
-
-
-
 class gpuPredict
 {
   real *c_result, *c_error, *c_deriv;
@@ -83,8 +80,6 @@ class gpuPredict
   real *d_invQt, *d_invQ, *d_predict, *d_train, *d_inputs;
   real *d_dist_matrix; real *d_dist_matrix_T;
   cublasHandle_t handle;
-
-
 
   public:
     gpuPredict(real *ctheta_exp, 

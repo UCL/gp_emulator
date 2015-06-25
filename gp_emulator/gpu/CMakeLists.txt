@@ -13,7 +13,7 @@ include_directories(${NUMPY_INCLUDE_DIRS}/numpy)
 set(CUBLAS_TARGET_LINK ${FOUND_CUBLAS})
 
 cuda_add_library(_gpu_predict  _gpu_predict.cpp 
-                 predict.cu 
+    #                 predict.cu 
                  predictcpp.cu
                  computeTranspose.cu 
                  kernel_vectorTimesMatrix.cu 

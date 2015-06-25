@@ -16,7 +16,8 @@ cuda_add_executable(gpu_predict_test unit_test.cu
                     testPredict.cu      
                     testVecTimesMat.cu
                     testInitArray.cu
-                    ../predict.cu 
+                    #                    ../predict.cu
+                    ../predictcpp.cu
                     ../computeTranspose.cu 
                     ../kernel_vectorTimesMatrix.cu
                     ../kernel_init_array.cu

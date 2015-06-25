@@ -1,6 +1,8 @@
 #include "gpu_predict_test.h"
 
-void testCublasgemm(const real *c_mat1, const real *c_mat2, const real *c_res, const int mat1_nrows, const int mat1_ncols, const int mat2_nrows, const int mat2_ncols)
+void testCublasgemm(const real *c_mat1, const real *c_mat2, const real *c_res, 
+        const int mat1_nrows, const int mat1_ncols, const int mat2_nrows, 
+        const int mat2_ncols)
 {
     cublasHandle_t handle;
     cublasCreate(&handle);
