@@ -17,7 +17,6 @@ void kernel_crossMinus(const real *vec1,const real *vec2, real *matrix_result, c
 
 void gpu_crossMinus(const real *vec1, const real *vec2, real *matrix_result, const int vec1_len, const int vec2_len)
 {
-printf("crossMinus  ");
     dim3 nthread, nblock;
     if( vec2_len < MAX_NUM_THREAD )
         nthread.y = vec2_len;
