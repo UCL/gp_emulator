@@ -15,6 +15,7 @@
 static PyMethodDef gpuMethods[] = 
 {
     {"predict_wrap", predict_wrap, METH_VARARGS},
+    {"pure_c_predict_wrap", pure_c_predict_wrap, METH_VARARGS},
     {NULL, NULL}     /* Sentinel - marks the end of this structure */
 };
 
@@ -160,6 +161,54 @@ PyObject *predict_wrap ( PyObject *self, PyObject *args )
 
 
 
+
+/**********************************//**
+ **********************************/
+PyObject *pure_c_predict_wrap ( PyObject *self, PyObject *args )
+{
+    int i;
+    int Npredict, Ntrain, Ninputs, theta_size;
+    real *c_theta_exp;
+    real *c_train, *c_invQt, *c_invQ, *c_predict;
+    real *c_result, *c_error, *c_deriv;
+   
+    getPredictDataFromPython(args, &c_theta_exp, &c_invQt, &c_invQ,
+                             &c_predict, &c_train,
+                             &c_result, &c_error, &c_deriv,
+                             &Npredict, &Ntrain, &Ninputs,  &theta_size);
+
+    //transpose 2D array to column major to cope with cublas
+    real *c_invQ_T, *c_train_T, *c_predict_T;
+    c_invQ_T = computeTranspose( c_invQ, Ntrain, Ntrain );
+    c_train_T = computeTranspose( c_train, Ninputs, Ntrain );
+    c_predict_T = computeTranspose( c_predict, Ninputs, Npredict);
+
+    //get c_theta_exp_sqrt
+    real *c_theta_exp_sqrt;
+    c_theta_exp_sqrt = (real *)malloc( sizeof(real) * theta_size );
+    for( i = 0; i < theta_size; i++ )
+    {
+        c_theta_exp_sqrt[i] = sqrt( c_theta_exp[i] );
+    }
+
+    //predict
+    gpuPredict gpu_predict(
+        c_theta_exp, c_theta_exp_sqrt,
+        c_invQt, c_invQ_T, 
+        c_predict_T,c_train_T, 
+        c_result, c_error, c_deriv,
+        Npredict, Ntrain, Ninputs, theta_size );
+    gpu_predict.predict();
+
+
+    free(c_invQ_T);
+    free(c_train_T);
+    free(c_predict_T);
+    free(c_theta_exp_sqrt);
+   
+    Py_INCREF(Py_None);
+    return Py_None;
+}
 
 
 
