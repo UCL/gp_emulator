@@ -32,9 +32,9 @@ void cpu_cdist(const real *input1, const real *input2, real *output, const int n
 
 void pureCPredict::predict(void)
 {
-//   compute_result();
-//    compute_error();
-//    compute_deriv();
+   compute_result();
+   compute_error();
+   compute_deriv();
 }
 
 
