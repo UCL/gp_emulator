@@ -27,10 +27,14 @@
   #define CUBLAS_GEMV cublasDgemv
   #define CUBLAS_GEMM cublasDgemm
   #define CUBLAS_GEAM cublasDgeam
+  #define BLAS_GEMV   cblas_dgemv
+  #define BLAS_GEMM   cblas_dgemm
 #else 
   #define CUBLAS_GEMV cublasSgemv
   #define CUBLAS_GEMM cublasSgemm
   #define CUBLAS_GEAM cublasSgeam
+  #define BLAS_GEMV   cblas_sgemv
+  #define BLAS_GEMM   cblas_sgemm
 #endif
 
 __forceinline__ __host__ __device__
@@ -44,7 +48,7 @@ real*pyvector_to_Carrayptrs(PyArrayObject *arrayin);
 real **pymatrix_to_Carrayptrs(PyArrayObject *arrayin);
 real **ptrvector(long n);
 PyObject *predict_wrap ( PyObject *self, PyObject *args );
-
+PyObject *pure_c_predict_wrap ( PyObject *self, PyObject *args );
 
 void getPredictDataFromPython(PyObject *args, real **c_theta_exp, real **c_invQt, real **c_invQ, 
                               real **c_testing, real **c_inputs,
@@ -81,36 +85,15 @@ class gpuPredict
   real *d_invQt, *d_invQ, *d_predict, *d_train, *d_inputs;
   real *d_dist_matrix; real *d_dist_matrix_T;
   cublasHandle_t handle;
-
   public:
-    gpuPredict(real *ctheta_exp, 
-      real *ctheta_exp_sqrt,
-      real *cinvQt,
-      real *cinvQ, 
-      real *cpredict,          
-      real *ctrain,
-      real *cresult, 
-      real *cerror,
-      real *cderiv,
-      int npredict,
-      int ntrain,
-      int ninputs,
-      int thetasize):
-    c_theta_exp(ctheta_exp),
-    c_theta_exp_sqrt(ctheta_exp_sqrt),
-    c_invQt(cinvQt),
-    c_invQ(cinvQ),
-    c_predict(cpredict),
-    c_train(ctrain),
-    c_result(cresult),
-    c_error(cerror),
-    c_deriv(cderiv),
-    Npredict(npredict),
-    Ntrain(ntrain),
-    Ninputs(ninputs),
-    theta_size(thetasize){};
+    gpuPredict(real *ctheta_exp, real *ctheta_exp_sqrt, real *cinvQt,
+              real *cinvQ, real *cpredict, real *ctrain, real *cresult, 
+              real *cerror, real *cderiv, int npredict, int ntrain,
+              int ninputs, int thetasize):
+          c_theta_exp(ctheta_exp), c_theta_exp_sqrt(ctheta_exp_sqrt),  c_invQt(cinvQt),
+          c_invQ(cinvQ), c_predict(cpredict), c_train(ctrain), c_result(cresult), c_error(cerror),   
+          c_deriv(cderiv), Npredict(npredict), Ntrain(ntrain), Ninputs(ninputs), theta_size(thetasize){};
     
-
     real * gpu_transpose(real *, const int, const int);
     void init_gpu(void);
     void compute_distance(void);
@@ -121,6 +104,28 @@ class gpuPredict
     void free_gpu(void);
 };
 
+class pureCPredict 
+{
+  real *c_result, *c_error, *c_deriv;
+  const real *c_theta_exp, *c_theta_exp_sqrt;
+  real *c_invQt, *c_invQ, *c_predict, *c_train, *c_inputs;
+  real * c_dist_matrix, *c_dist_matrix_T;
+  const int Npredict, Ntrain, Ninputs;
+  const int theta_size;
+
+public:
+  pureCPredict(real *ctheta_exp, real *ctheta_exp_sqrt, real *cinvQt,
+              real *cinvQ, real *cpredict, real *ctrain, real *cresult, 
+              real *cerror, real *cderiv, int npredict, int ntrain,
+              int ninputs, int thetasize):
+          c_theta_exp(ctheta_exp), c_theta_exp_sqrt(ctheta_exp_sqrt),  c_invQt(cinvQt),
+          c_invQ(cinvQ), c_predict(cpredict), c_train(ctrain), c_result(cresult), c_error(cerror),   
+          c_deriv(cderiv), Npredict(npredict), Ntrain(ntrain), Ninputs(ninputs), theta_size(thetasize){};
+  void predict(void);
+  void compute_result(void);
+  void compute_error(void);
+  void compute_deriv(void);
+};
 
 
 

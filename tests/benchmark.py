@@ -21,7 +21,7 @@ if __name__ == '__main__':
     print 'Problem_size\tCPU time\tGPU time\tSpeedup\tStatus'
     print '-----------------------------'
     
-    for Npredict in xrange(np.int(1e5), np.int(1e6), np.int(1e5)):
+    for Npredict in xrange(np.int(1e3), np.int(1e6), np.int(1e5)):
         Ntrain = 250
         Ninputs = 10
 
@@ -39,7 +39,7 @@ if __name__ == '__main__':
     	
         #GPU predict
         start = time.time()
-        [mu_g, var_g, deriv_g] = gp.predict(testing, is_gpu = True, precision = np.float32, threshold = 1e5)
+        [mu_g, var_g, deriv_g] = gp.predict(testing, is_gpu = True, precision = np.float64, threshold = 5e4)
     	end =time.time()
     	gputime = end - start
         print "%d\t%.2fs\t%.2fs\t%.2fx\t" % (Npredict, cputime, gputime, cputime/gputime),

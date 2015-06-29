@@ -235,7 +235,6 @@ class GaussianProcess:
         b = expX[self.D]
         
         mu = np.dot( a.T, self.invQt)
-
         if do_unc:
             var = b - np.sum (  a * np.dot(self.invQ,a), axis=0)
         # Derivative and partial derivatives of the function
@@ -319,9 +318,32 @@ class GaussianProcess:
            error = np.append(error, error_block)
            #deriv produced by gpu is transposed, so here we need transpose them back.
            deriv = np.append(deriv, deriv_block.reshape( n_inputs, n_predict_block ).T, axis = 0)
-
         return result, error, deriv
 
+    def pure_c_predict(self, testing, precision):
+        import _gpu_predict
+        n_predict, n_inputs = testing.shape
+        n_train = self.inputs.shape[0]
+        theta_size=self.theta.size
+
+        assert n_inputs == self.D
+
+        #_predict_wrap() has to be fed by one dimentional array
+        testing = precision(testing.reshape(testing.shape[0]*testing.shape[1]))
+        inputs = precision(self.inputs.reshape(self.inputs.shape[0] * self.inputs.shape[1]))
+        invQt = precision(self.invQt)
+        invQ =  precision(self.invQ.reshape(self.invQ.shape[0] * self.invQ.shape[1]))
+        expX = precision(np.exp(self.theta))
+
+        result = precision(np.zeros(n_predict))
+        error = precision(np.zeros(n_predict))
+        deriv = precision(np.zeros(n_predict * n_inputs))
+        
+        _gpu_predict.pure_c_predict_wrap(
+                   expX, inputs, invQt, invQ, testing,
+                   result, error, deriv,
+                   n_predict, n_train, n_inputs, theta_size)
+        return result, error, deriv.reshape(n_inputs, n_predict).T
 
 
     def predict(self, testing, do_unc = True, is_gpu = False, precision = np.float64, threshold = 2e5):
@@ -336,7 +358,8 @@ class GaussianProcess:
                 and gpu_predict will be excuted for multiple time.
         '''
         if is_gpu == True:
-            return self.gpu_predict(testing, precision, threshold = threshold)
+            return self.pure_c_predict(testing = testing, precision = precision)
+            #return self.gpu_predict(testing, precision, threshold = threshold)
         else:
             return self.cpu_predict(testing, do_unc)
 

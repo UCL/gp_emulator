@@ -94,10 +94,10 @@ void getPredictDataFromPython(PyObject *args, real **c_theta_exp, real **c_invQt
         &PyArray_Type, &py_error,
         &PyArray_Type, &py_deriv,
         Npredict, Ntrain, Ninputs, theta_size);
-
+    
     *c_theta_exp = pyvector_to_Carrayptrs( py_theta_exp);
     *c_train = pyvector_to_Carrayptrs( py_train );
-    *c_invQt = pyvector_to_Carrayptrs( py_invQt );
+    *c_invQt = pyvector_to_Carrayptrs( py_invQt ); 
     *c_invQ = pyvector_to_Carrayptrs( py_invQ );
     *c_predict = pyvector_to_Carrayptrs( py_predict );
     *c_result = pyvector_to_Carrayptrs( py_result );
@@ -163,6 +163,7 @@ PyObject *predict_wrap ( PyObject *self, PyObject *args )
 
 
 /**********************************//**
+ Pure C implementation for benchmarking purpose only. 
  **********************************/
 PyObject *pure_c_predict_wrap ( PyObject *self, PyObject *args )
 {
@@ -192,13 +193,14 @@ PyObject *pure_c_predict_wrap ( PyObject *self, PyObject *args )
     }
 
     //predict
-    gpuPredict gpu_predict(
+    pureCPredict CPredict(
         c_theta_exp, c_theta_exp_sqrt,
         c_invQt, c_invQ_T, 
         c_predict_T,c_train_T, 
         c_result, c_error, c_deriv,
         Npredict, Ntrain, Ninputs, theta_size );
-    gpu_predict.predict();
+    
+    CPredict.predict();
 
 
     free(c_invQ_T);
