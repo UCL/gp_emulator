@@ -24,7 +24,8 @@ void cpu_cdist(const real *input1, const real *input2, real *output, const int n
         {
             for( iz = 0; iz < ncol1; ++iz )
             {
-                output[IDX2D(ix, iy, nrow2)] += pow(input1[IDX2D(iy, iz, nrow1)] - input2[IDX2D(ix, iz, nrow2)],2);
+                output[IDX2D(ix, iy, nrow2)] += (input1[IDX2D(iy, iz, nrow1)] - input2[IDX2D(ix, iz, nrow2)]) * 
+                    (input1[IDX2D(iy, iz, nrow1)] - input2[IDX2D(ix, iz, nrow2)]);
             }
         }
     }
