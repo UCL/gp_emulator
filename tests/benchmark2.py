@@ -25,40 +25,40 @@ def predict_benchmark( self, testing, do_unc=True ):
     in_dist1 = np.sqrt(expX[:(self.D)])*self.inputs
     in_dist2 = np.sqrt(expX[:(self.D)])*testing
     end_mvel = time.time()
-    print 'mvel(2)', end_mvel - start_mvel
+    print 'mvel',2, end_mvel - start_mvel
 
     start_dist = time.time()
     a = dist.cdist ( in_dist1, in_dist2, 'sqeuclidean')
     end_dist = time.time()
-    print 'dist(1)', end_dist - start_dist
+    print 'dist',1, end_dist - start_dist
 
     start_exp = time.time()
     a = expX[self.D]*np.exp(-0.5*a)
     end_exp = time.time()
-    print 'exp-ele(3)', end_exp - start_exp
+    print 'exp-ele',3, end_exp - start_exp
 
     b = expX[self.D]
     
     start_mv =time.time()
     mu = np.dot( a.T, self.invQt)
     end_mv = time.time()
-    print 'mv(1)', end_mv - start_mv
+    print 'mv',1,end_mv - start_mv
     
     if do_unc:
         start_mm = time.time()
         k = np.dot(self.invQ,a)
         end_mm = time.time()
-        print 'mm(1)', end_mm - start_mm
+        print 'mm',1,end_mm - start_mm
 
         start_mulele = time.time()
         k = a * k 
         end_mulele = time.time()
-        print 'mul-ele(1)', end_mulele - start_mulele
+        print 'mul-ele',1, end_mulele - start_mulele
 
         start_sum = time.time()
         var = b - np.sum (b, axis=0)
         end_sum = time.time()
-        print 'sum(1)', end_sum - start_sum
+        print 'sum',1, end_sum - start_sum
         # Derivative and partial derivatives of the function
     deriv = np.zeros ( ( nn, self.D ) )
 
@@ -83,10 +83,10 @@ def predict_benchmark( self, testing, do_unc=True ):
         mv2 = mv2 + e_mv2 - s_mv2
     end_predict = time.time()
        
-    print 'crossminus(10)', crossminus
-    print 'mul_ele2(10)', mul_ele2
-    print 'mv2(10)', mv2
-    print 'predict',end_predict - start_predict
+    print 'crossminus',10, crossminus
+    print 'mul_ele2',10,mul_ele2
+    print 'mv2',10, mv2
+    print 'predict',1,end_predict - start_predict
 
     if do_unc:
         return mu, var, deriv
@@ -101,8 +101,10 @@ if __name__ == '__main__':
     print 'Problem_size\tCPU time\tGPU time\tSpeedup\tStatus'
     print '-----------------------------'
     
-    for Npredict in xrange(np.int(1e6), np.int(2e6), np.int(1e6)):
-        Ntrain = 250
+    for i in xrange(10):
+        
+        Npredict = np.int(1e6)
+	Ntrain = 250
         Ninputs = 10
 
         inputs = np.random.random(( Ntrain, Ninputs))
@@ -116,27 +118,6 @@ if __name__ == '__main__':
     	[mu_c, var_c, deriv_c] = gp.predict_benchmark(testing )
     	end = time.time()
     	cputime = end -start
-    	
-        #GPU predict
-        start = time.time()
-#        [mu_g, var_g, deriv_g] = gp.predict(testing, is_gpu = True, precision = np.float32, threshold = 1e5)
-    	end =time.time()
-    	gputime = end - start
-        print "%d\t%.2fs\t%.2fs\t%.2fx\t" % (Npredict, cputime, gputime, cputime/gputime),
-
-    
-    
-        # checking results
-#        try: 
-#            e_mu  = max(abs(mu_c - mu_g) ) / np.max(abs(mu_c))
-#            e_var = max(abs(var_c - var_g)) / np.max(abs(var_c))
-#            e_deriv = np.max(abs(deriv_c - deriv_g)) / np.max(abs(deriv_c))
-#        except ValueError:
-#            print 'Results have invalid data type or dimension.'
-#        if e_mu > 1e-5 or e_var > 1e-5 or e_deriv > 1e-5:
-#            print 'FAILED\t',
-#        else:
-#            print 'Pass\t',
-#        print 'e_mu=%.2g\te_var=%.2g\te_deriv=%.2g\t'%(e_mu, e_var, e_deriv)
-
+	print 'cputime', cputime
+	print '=================='
 
