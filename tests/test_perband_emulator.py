@@ -31,7 +31,6 @@ def perband_emulators ( emulators, band_pass ):
     for i in xrange( n_bands ):
         gp = GaussianProcess ( emulators.y_train[:]*1, \
                 x_train_pband[i,:] )
-        print 'p1', (emulators.y_train[:]*1).shape, 'p2', x_train_pband[i,:].shape
         gp.learn_hyperparameters ( n_tries=5 )
         emus.append ( gp )
     return emus
@@ -46,10 +45,10 @@ gp_single = perband_emulators ( gp, band_pass )
 
 print isinstance ( gp_single[0], GaussianProcess)
 X = d[:, :10]
-gpur = gp_single[0].predict ( X ,is_gpu=True)[0]
-cpur = gp_single[0].predict ( X, is_gpu=False)[0]
-print gpur - cpur
-print 'predict finish'
+gpu = gp_single[0].predict ( X ,is_gpu=True, precision = np.float32)
+cpu = gp_single[0].predict ( X, is_gpu=False)
+#print gpur - cpur
+#print 'predict finish'
 #plt.plot ( new_output, r,'o')
 #plt.plot([0, 0.6], [0, 0.6], 'k--')
 
