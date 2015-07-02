@@ -358,8 +358,7 @@ class GaussianProcess:
                 and gpu_predict will be excuted for multiple time.
         '''
         if is_gpu == True:
-            return self.pure_c_predict(testing = testing, precision = precision)
-            #return self.gpu_predict(testing, precision, threshold = threshold)
+            return self.gpu_predict(testing, precision, threshold = threshold)
         else:
             return self.cpu_predict(testing, do_unc)
 

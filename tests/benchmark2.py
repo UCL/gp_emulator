@@ -124,7 +124,7 @@ if __name__ == '__main__':
 
         #GPU PREDICT
         start = time.time()
-        [mu_g, var_g, deriv_g] = gp.predict(testing, is_gpu=True, precision=np.float32, threshold = 1e5)
+        [mu_g, var_g, deriv_g] = gp.pure_c_predict(testing, precision=np.float32)
         end = time.time()
         gputime = end - start
         print 'cputime', gputime
