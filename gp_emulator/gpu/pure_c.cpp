@@ -55,7 +55,7 @@ start = clock();
     cpu_cdist(c_res_mv1, c_res_mv2, c_dist_matrix, Ntrain, Ninputs, Npredict, Ninputs);
 diff = clock() - start;
 int msec = diff * 1000 / CLOCKS_PER_SEC;
-printf("Time taken %f",float(msec)/1000);
+printf("cdist:  %f\n",float(msec)/1000);
 
     for( i = 0; i < Ntrain * Npredict; ++i)
         c_dist_matrix[i] = c_theta_exp[Ninputs] * exp( -0.5 * c_dist_matrix[i]);
@@ -101,6 +101,8 @@ void pureCPredict::compute_error(void)
 void pureCPredict::compute_deriv(void)
 {
     int i, j, n;
+    clock_t start, end, diff;
+    diff=0;
     real *aa;
     real *ptr_train, *ptr_predict, *ptr_deriv;
     ptr_train = c_train;
@@ -119,15 +121,20 @@ void pureCPredict::compute_deriv(void)
         }
         ptr_train = ptr_train + Ntrain;
         ptr_predict = ptr_predict + Npredict;
+
+        start = clock();
         for(i = 0; i < Ntrain * Npredict; ++i )
         {
             aa[i] = c_dist_matrix_T[i] * aa[i];
         }
+        end = clock();
+        diff += end - start;
 
         alpha = c_theta_exp[n];
         BLAS_GEMV(CblasColMajor, CblasTrans, Ntrain, Npredict, alpha, aa, Ntrain, c_invQt, 1, 0, ptr_deriv, 1);
         ptr_deriv = ptr_deriv + Npredict;
     }
+    printf("mat_ele2 %f\n", (float)(diff/CLOCKS_PER_SEC));
     
    free(aa);
 }
