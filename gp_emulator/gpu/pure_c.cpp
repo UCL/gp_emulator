@@ -34,9 +34,13 @@ void cpu_cdist(const real *input1, const real *input2, real *output, const int n
 
 void pureCPredict::predict(void)
 {
-   compute_result();
-   compute_error();
-   compute_deriv();
+    clock_t start, diff;
+    start = clock();
+    compute_result();
+    compute_error();
+    compute_deriv();
+    diff = clock() -start;
+    printf("predict %f\n", (float)(diff)/CLOCKS_PER_SEC);
 }
 
 
