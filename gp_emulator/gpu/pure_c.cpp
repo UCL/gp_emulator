@@ -1,5 +1,6 @@
 #include"gpu_predict.h"
 #include <gsl/gsl_cblas.h>
+#include<time.h>
 void cpu_vectorTimesMatrix(const real *matrix, const real *vector, real *res, int lead_dim, int second_dim)
 {
     int ix, iy;
@@ -43,13 +44,19 @@ void pureCPredict::predict(void)
 void pureCPredict::compute_result(void)
 {
     int i;
+    clock_t start, diff;
     real *c_res_mv1, *c_res_mv2;
     c_res_mv1 = (real *)malloc(sizeof(real) * Ntrain * Ninputs);
     c_res_mv2 = (real *)malloc(sizeof(real) * Npredict * Ninputs);
     c_dist_matrix = (real *)malloc(sizeof(real) * Npredict * Ntrain);
     cpu_vectorTimesMatrix(c_train, c_theta_exp_sqrt, c_res_mv1, Ntrain, Ninputs);
     cpu_vectorTimesMatrix(c_predict, c_theta_exp_sqrt, c_res_mv2, Npredict, Ninputs);
+start = clock();
     cpu_cdist(c_res_mv1, c_res_mv2, c_dist_matrix, Ntrain, Ninputs, Npredict, Ninputs);
+diff = clock() - start;
+int msec = diff * 1000 / CLOCKS_PER_SEC;
+printf("Time taken %f",float(msec)/1000);
+
     for( i = 0; i < Ntrain * Npredict; ++i)
         c_dist_matrix[i] = c_theta_exp[Ninputs] * exp( -0.5 * c_dist_matrix[i]);
     BLAS_GEMV(CblasColMajor, CblasNoTrans, Npredict, Ntrain, 1.0, c_dist_matrix, Npredict, c_invQt, 1, 0.0, c_result, 1);
