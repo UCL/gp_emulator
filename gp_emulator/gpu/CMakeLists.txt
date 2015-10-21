@@ -1,16 +1,5 @@
 cmake_minimum_required (VERSION 2.8)
 
-find_package(Numpy REQUIRED)
-find_package(CoherentPython REQUIRED)
-find_package(CUDA QUIET REQUIRED)
-
-find_library(FOUND_CUBLAS cublas)
-include_directories(${PYTHON_INCLUDE_DIRS})
-include_directories(${NUMPY_INCLUDE_DIRS}/numpy)
-
-
-set(CUBLAS_TARGET_LINK ${FOUND_CUBLAS})
-
 cuda_add_library(_gpu_predict  _gpu_predict.cpp 
                  predict.cu
                  computeTranspose.cu 
